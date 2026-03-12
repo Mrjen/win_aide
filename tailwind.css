@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #0f1116;
+  --color-bg-card: #1e222d;
+  --color-accent: #91a4d2;
+  --color-accent-focus: #6d85c6;
+}

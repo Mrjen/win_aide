@@ -31,6 +31,7 @@ pub fn ShortcutForm(
     conflict_message: Option<String>,
     on_save: EventHandler<ShortcutFormData>,
     on_cancel: EventHandler<()>,
+    on_pick_process: EventHandler<()>,
 ) -> Element {
     let mut name = use_signal(|| initial.name.clone());
     let mut exe_name = use_signal(|| initial.exe_name.clone());
@@ -110,6 +111,11 @@ pub fn ShortcutForm(
                                 }
                             },
                             "浏览..."
+                        }
+                        button {
+                            class: "px-3 py-2 bg-bg-hover border border-border-default text-text-secondary rounded-lg hover:bg-border-default hover:text-text-primary transition-colors cursor-pointer text-sm font-medium shrink-0",
+                            onclick: move |_| on_pick_process.call(()),
+                            "选择运行中的程序"
                         }
                     }
                 }

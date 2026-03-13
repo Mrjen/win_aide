@@ -6,6 +6,7 @@ mod autostart;
 mod config;
 mod hotkey;
 mod launcher;
+mod process;
 mod tray;
 mod views;
 

@@ -19,6 +19,7 @@ pub fn Home(
     let mut show_process_picker = use_signal(|| false);
     let mut process_list = use_signal(Vec::<ProcessInfo>::new);
     let mut process_loading = use_signal(|| false);
+    let mut form_key = use_signal(|| 0u32);
 
     // 将 config shortcuts 转换为 UI 行
     let rows: Vec<ShortcutRow> = config()
@@ -339,6 +340,7 @@ pub fn Home(
             // ── 新增/编辑弹窗 ──
             if show_form() {
                 ShortcutForm {
+                    key: "{form_key}",
                     initial: form_data(),
                     conflict_message: conflict_msg(),
                     on_save: move |data: ShortcutFormData| {
@@ -398,8 +400,6 @@ pub fn Home(
                     processes: process_list(),
                     loading: process_loading(),
                     on_select: move |info: ProcessInfo| {
-                        // 关闭表单再重新打开，使 ShortcutForm 重新初始化
-                        show_form.set(false);
                         form_data.set(ShortcutFormData {
                             id: form_data().id,
                             name: info.name.clone(),
@@ -409,10 +409,8 @@ pub fn Home(
                             hotkey: form_data().hotkey,
                         });
                         show_process_picker.set(false);
-                        // 延迟重新打开表单，确保组件重建以读取新的 initial 值
-                        spawn(async move {
-                            show_form.set(true);
-                        });
+                        // 递增 key 强制 ShortcutForm 重建，重新读取 initial 值
+                        form_key.set(form_key() + 1);
                     },
                     on_cancel: move |_| {
                         show_process_picker.set(false);

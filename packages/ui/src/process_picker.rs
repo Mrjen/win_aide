@@ -118,7 +118,8 @@ pub fn ProcessPicker(
                 }
 
                 // 进程列表
-                div { class: "flex-1 overflow-y-auto px-2 pb-4",
+                div { class: "overflow-y-auto px-2 pb-4",
+                    style: "max-height: calc(70vh - 120px);",
                     if loading {
                         div { class: "flex items-center justify-center py-12 text-text-muted text-sm",
                             "正在获取运行中的程序..."

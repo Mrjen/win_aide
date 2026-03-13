@@ -80,13 +80,13 @@ fn App() -> Element {
     });
 
     let mut config = use_signal(|| config::load_config());
+    let mut paused = use_signal(|| false);
 
     // 轮询托盘菜单事件
     let tray_channels = channels.clone();
     use_future(move || {
         let channels = tray_channels.clone();
         async move {
-            let mut paused = false;
             loop {
                 tokio::time::sleep(std::time::Duration::from_millis(100)).await;
                 if let Some(event) = tray::poll_tray_event() {
@@ -97,8 +97,8 @@ fn App() -> Element {
                             window.set_focus();
                         }
                         tray::TrayEvent::TogglePause => {
-                            paused = !paused;
-                            if paused {
+                            paused.set(!paused());
+                            if paused() {
                                 if let Ok(tx) = channels.hotkey_tx.lock() {
                                     let _ = tx.send(hotkey::HotkeyCommand::UnregisterAll);
                                 }
@@ -134,6 +134,7 @@ fn App() -> Element {
         div { class: "bg-bg-primary text-white font-sans min-h-screen",
             Home {
                 config: config,
+                paused: paused,
                 on_config_changed: move |new_config: AppConfig| {
                     config.set(new_config.clone());
 

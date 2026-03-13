@@ -6,6 +6,7 @@ use crate::config::{self, AppConfig, Shortcut};
 #[component]
 pub fn Home(
     config: Signal<AppConfig>,
+    paused: Signal<bool>,
     on_config_changed: EventHandler<AppConfig>,
 ) -> Element {
     let mut show_form = use_signal(|| false);
@@ -94,6 +95,13 @@ pub fn Home(
                             "启动时最小化到托盘"
                         }
                     }
+                }
+            }
+
+            // 暂停状态横幅
+            if paused() {
+                div { class: "px-4 py-2 bg-yellow-900/40 border-b border-yellow-700 text-yellow-300 text-sm flex items-center gap-2",
+                    span { "所有快捷键已暂停 — 通过托盘菜单恢复" }
                 }
             }
 

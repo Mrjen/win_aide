@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use ui::{Navbar, ShortcutForm, ShortcutFormData, ShortcutList, ShortcutRow};
+use ui::{Navbar, ProcessInfo, ProcessPicker, ShortcutForm, ShortcutFormData, ShortcutList, ShortcutRow};
 
 use crate::config::{self, AppConfig, Shortcut};
 
@@ -16,6 +16,9 @@ pub fn Home(
     let mut form_data = use_signal(ShortcutFormData::default);
     let mut show_settings = use_signal(|| false);
     let mut delete_confirm = use_signal(|| None::<String>);
+    let mut show_process_picker = use_signal(|| false);
+    let mut process_list = use_signal(Vec::<ProcessInfo>::new);
+    let mut process_loading = use_signal(|| false);
 
     // 将 config shortcuts 转换为 UI 行
     let rows: Vec<ShortcutRow> = config()
@@ -232,6 +235,45 @@ pub fn Home(
                         show_form.set(false);
                     },
                     on_cancel: move |_| show_form.set(false),
+                    on_pick_process: move |_| {
+                        show_process_picker.set(true);
+                        process_loading.set(true);
+                        spawn(async move {
+                            let processes = tokio::task::spawn_blocking(|| {
+                                crate::process::list_windowed_processes()
+                            }).await.unwrap_or_default();
+                            process_list.set(processes);
+                            process_loading.set(false);
+                        });
+                    },
+                }
+            }
+
+            // ── 进程选择弹窗 ──
+            if show_process_picker() {
+                ProcessPicker {
+                    processes: process_list(),
+                    loading: process_loading(),
+                    on_select: move |info: ProcessInfo| {
+                        // 关闭表单再重新打开，使 ShortcutForm 重新初始化
+                        show_form.set(false);
+                        form_data.set(ShortcutFormData {
+                            id: form_data().id,
+                            name: info.name.clone(),
+                            exe_name: info.exe_name.clone(),
+                            exe_path: info.exe_path.clone(),
+                            modifier: form_data().modifier,
+                            hotkey: form_data().hotkey,
+                        });
+                        show_process_picker.set(false);
+                        // 延迟重新打开表单，确保组件重建以读取新的 initial 值
+                        spawn(async move {
+                            show_form.set(true);
+                        });
+                    },
+                    on_cancel: move |_| {
+                        show_process_picker.set(false);
+                    },
                 }
             }
         }

@@ -53,7 +53,17 @@ fn main() {
             launcher_tx: Arc::new(Mutex::new(launcher_update_tx)),
         });
 
-    dioxus::launch(App);
+    dioxus::LaunchBuilder::new()
+        .with_cfg(
+            dioxus::desktop::Config::new()
+                .with_window(
+                    dioxus::desktop::tao::window::WindowBuilder::new()
+                        .with_title("Win Aide")
+                        .with_inner_size(dioxus::desktop::tao::dpi::LogicalSize::new(800, 600)),
+                )
+                .with_menu(None),
+        )
+        .launch(App);
 }
 
 #[component]

@@ -27,7 +27,7 @@ pub fn Home(
             exe_path: s.exe_path.clone(),
             modifier: s.modifier.display_name().to_string(),
             hotkey: s.key,
-            enabled: s.enabled,
+            enabled: s.enabled && !paused(),
         })
         .collect();
 

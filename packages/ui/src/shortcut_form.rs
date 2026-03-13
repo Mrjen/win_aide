@@ -52,14 +52,14 @@ pub fn ShortcutForm(
                 class: "bg-bg-card rounded-lg p-6 w-[450px] shadow-xl",
                 onclick: move |e| e.stop_propagation(),
 
-                h2 { class: "text-xl font-semibold text-white mb-6", "{title}" }
+                h2 { class: "text-xl font-semibold text-text-primary mb-6", "{title}" }
 
                 // 应用名称
                 div { class: "mb-4",
-                    label { class: "block text-sm text-gray-400 mb-1", "应用名称" }
+                    label { class: "block text-sm text-text-secondary mb-1", "应用名称" }
                     input {
                         r#type: "text",
-                        class: "w-full bg-bg-primary border border-gray-700 rounded px-3 py-2 text-white focus:border-accent-focus focus:outline-none",
+                        class: "w-full bg-bg-primary border border-border-default rounded px-3 py-2 text-text-primary focus:border-accent-focus focus:outline-none",
                         placeholder: "例如：Chrome",
                         value: "{name}",
                         oninput: move |e| name.set(e.value()),
@@ -68,10 +68,10 @@ pub fn ShortcutForm(
 
                 // 进程名
                 div { class: "mb-4",
-                    label { class: "block text-sm text-gray-400 mb-1", "进程名" }
+                    label { class: "block text-sm text-text-secondary mb-1", "进程名" }
                     input {
                         r#type: "text",
-                        class: "w-full bg-bg-primary border border-gray-700 rounded px-3 py-2 text-white focus:border-accent-focus focus:outline-none",
+                        class: "w-full bg-bg-primary border border-border-default rounded px-3 py-2 text-text-primary focus:border-accent-focus focus:outline-none",
                         placeholder: "例如：chrome.exe",
                         value: "{exe_name}",
                         oninput: move |e| exe_name.set(e.value()),
@@ -80,17 +80,17 @@ pub fn ShortcutForm(
 
                 // 路径
                 div { class: "mb-4",
-                    label { class: "block text-sm text-gray-400 mb-1", "可执行文件路径" }
+                    label { class: "block text-sm text-text-secondary mb-1", "可执行文件路径" }
                     div { class: "flex gap-2",
                         input {
                             r#type: "text",
-                            class: "flex-1 bg-bg-primary border border-gray-700 rounded px-3 py-2 text-white focus:border-accent-focus focus:outline-none text-sm",
+                            class: "flex-1 bg-bg-primary border border-border-default rounded px-3 py-2 text-text-primary focus:border-accent-focus focus:outline-none text-sm",
                             placeholder: "C:\\Program Files\\...",
                             value: "{exe_path}",
                             oninput: move |e| exe_path.set(e.value()),
                         }
                         button {
-                            class: "px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors cursor-pointer text-sm",
+                            class: "px-3 py-2 bg-border-default text-text-primary rounded hover:bg-text-secondary transition-colors cursor-pointer text-sm",
                             onclick: move |_| {
                                 let file = rfd::FileDialog::new()
                                     .add_filter("可执行文件", &["exe"])
@@ -116,10 +116,10 @@ pub fn ShortcutForm(
 
                 // 快捷键
                 div { class: "mb-6",
-                    label { class: "block text-sm text-gray-400 mb-1", "快捷键" }
+                    label { class: "block text-sm text-text-secondary mb-1", "快捷键" }
                     div { class: "flex gap-2 items-center",
                         select {
-                            class: "bg-bg-primary border border-gray-700 rounded px-3 py-2 text-white focus:border-accent-focus focus:outline-none cursor-pointer",
+                            class: "bg-bg-primary border border-border-default rounded px-3 py-2 text-text-primary focus:border-accent-focus focus:outline-none cursor-pointer",
                             value: "{modifier().display_name()}",
                             onchange: move |e| {
                                 let val = e.value();
@@ -133,10 +133,10 @@ pub fn ShortcutForm(
                             option { value: "Ctrl", "Ctrl" }
                             option { value: "Win", "Win" }
                         }
-                        span { class: "text-gray-400 text-lg", "+" }
+                        span { class: "text-text-secondary text-lg", "+" }
                         input {
                             r#type: "text",
-                            class: "w-16 bg-bg-primary border border-gray-700 rounded px-3 py-2 text-white text-center uppercase focus:border-accent-focus focus:outline-none",
+                            class: "w-16 bg-bg-primary border border-border-default rounded px-3 py-2 text-text-primary text-center uppercase focus:border-accent-focus focus:outline-none",
                             placeholder: "A",
                             maxlength: 1,
                             value: "{hotkey}",
@@ -164,12 +164,12 @@ pub fn ShortcutForm(
                 // 按钮
                 div { class: "flex justify-end gap-3",
                     button {
-                        class: "px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer",
+                        class: "px-4 py-2 text-text-secondary hover:text-text-primary transition-colors cursor-pointer",
                         onclick: move |_| on_cancel.call(()),
                         "取消"
                     }
                     button {
-                        class: "px-4 py-2 bg-accent text-white rounded hover:bg-accent-focus transition-colors cursor-pointer",
+                        class: "px-4 py-2 bg-accent text-text-primary rounded hover:bg-accent-focus transition-colors cursor-pointer",
                         onclick: {
                             let initial_id = initial_id.clone();
                             move |_| {

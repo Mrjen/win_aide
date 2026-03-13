@@ -21,7 +21,7 @@ pub fn ShortcutList(
     rsx! {
         div { class: "w-full",
             // 表头
-            div { class: "grid grid-cols-[50px_120px_1fr_1fr_100px] gap-2 px-4 py-2 text-sm text-gray-400 border-b border-gray-700",
+            div { class: "grid grid-cols-[50px_120px_1fr_1fr_100px] gap-2 px-4 py-2 text-sm text-text-secondary border-b border-border-default",
                 span { "启用" }
                 span { "快捷键" }
                 span { "应用名称" }
@@ -37,7 +37,7 @@ pub fn ShortcutList(
                     let id_delete = shortcut.id.clone();
                     rsx! {
                         div {
-                            class: "grid grid-cols-[50px_120px_1fr_1fr_100px] gap-2 px-4 py-3 items-center border-b border-gray-800 hover:bg-gray-800/50 transition-colors",
+                            class: "grid grid-cols-[50px_120px_1fr_1fr_100px] gap-2 px-4 py-3 items-center border-b border-border-subtle hover:bg-bg-card transition-colors",
                             // 启用复选框
                             div {
                                 input {
@@ -52,13 +52,13 @@ pub fn ShortcutList(
                                 "{shortcut.modifier} + {shortcut.hotkey}"
                             }
                             // 应用名称
-                            span { class: "text-white truncate", "{shortcut.name}" }
+                            span { class: "text-text-primary truncate", "{shortcut.name}" }
                             // 路径
-                            span { class: "text-gray-400 text-sm truncate", "{shortcut.exe_path}" }
+                            span { class: "text-text-secondary text-sm truncate", "{shortcut.exe_path}" }
                             // 操作按钮
                             div { class: "flex gap-2",
                                 button {
-                                    class: "px-2 py-1 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors cursor-pointer",
+                                    class: "px-2 py-1 text-sm text-text-secondary hover:text-text-primary hover:bg-border-default rounded transition-colors cursor-pointer",
                                     onclick: move |_| on_edit.call(id_edit.clone()),
                                     "编辑"
                                 }
@@ -75,7 +75,7 @@ pub fn ShortcutList(
 
             // 空状态
             if shortcuts.is_empty() {
-                div { class: "text-center text-gray-500 py-12",
+                div { class: "text-center text-text-muted py-12",
                     p { class: "text-lg mb-2", "暂无快捷键配置" }
                     p { class: "text-sm", "点击上方「添加快捷键」开始配置" }
                 }

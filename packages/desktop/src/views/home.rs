@@ -7,6 +7,7 @@ use crate::config::{self, AppConfig, Shortcut};
 pub fn Home(
     config: Signal<AppConfig>,
     paused: Signal<bool>,
+    dark_mode: Signal<bool>,
     on_config_changed: EventHandler<AppConfig>,
 ) -> Element {
     let mut show_form = use_signal(|| false);
@@ -41,12 +42,12 @@ pub fn Home(
             // 工具栏
             Navbar {
                 div { class: "flex items-center gap-2",
-                    h1 { class: "text-lg font-semibold text-white", "Win Aide" }
-                    span { class: "text-sm text-gray-400", "快捷键启动器" }
+                    h1 { class: "text-lg font-semibold text-text-primary", "Win Aide" }
+                    span { class: "text-sm text-text-secondary", "快捷键启动器" }
                 }
                 div { class: "flex gap-2",
                     button {
-                        class: "px-3 py-1.5 bg-accent text-white rounded hover:bg-accent-focus transition-colors cursor-pointer text-sm",
+                        class: "px-3 py-1.5 bg-accent text-text-primary rounded hover:bg-accent-focus transition-colors cursor-pointer text-sm",
                         onclick: move |_| {
                             form_data.set(ShortcutFormData::default());
                             editing_id.set(None);
@@ -56,7 +57,17 @@ pub fn Home(
                         "+ 添加快捷键"
                     }
                     button {
-                        class: "px-3 py-1.5 text-gray-300 hover:text-white border border-gray-700 rounded hover:bg-gray-700 transition-colors cursor-pointer text-sm",
+                        class: "px-3 py-1.5 text-text-secondary hover:text-text-primary border border-border-default rounded hover:bg-border-default transition-colors cursor-pointer text-sm",
+                        title: if dark_mode() { "切换到亮色模式" } else { "切换到暗色模式" },
+                        onclick: move |_| {
+                            let mut cfg = config();
+                            cfg.settings.dark_mode = !cfg.settings.dark_mode;
+                            save_and_notify(cfg);
+                        },
+                        if dark_mode() { "☀" } else { "🌙" }
+                    }
+                    button {
+                        class: "px-3 py-1.5 text-text-secondary hover:text-text-primary border border-border-default rounded hover:bg-border-default transition-colors cursor-pointer text-sm",
                         onclick: move |_| show_settings.set(!show_settings()),
                         "设置"
                     }
@@ -65,10 +76,10 @@ pub fn Home(
 
             // 设置面板
             if show_settings() {
-                div { class: "px-4 py-3 bg-bg-card border-b border-gray-700",
-                    h3 { class: "text-sm font-semibold text-gray-300 mb-3", "设置" }
+                div { class: "px-4 py-3 bg-bg-card border-b border-border-default",
+                    h3 { class: "text-sm font-semibold text-text-secondary mb-3", "设置" }
                     div { class: "flex gap-6",
-                        label { class: "flex items-center gap-2 text-sm text-gray-300 cursor-pointer",
+                        label { class: "flex items-center gap-2 text-sm text-text-secondary cursor-pointer",
                             input {
                                 r#type: "checkbox",
                                 checked: config().settings.auto_start,
@@ -81,7 +92,7 @@ pub fn Home(
                             }
                             "开机自启"
                         }
-                        label { class: "flex items-center gap-2 text-sm text-gray-300 cursor-pointer",
+                        label { class: "flex items-center gap-2 text-sm text-text-secondary cursor-pointer",
                             input {
                                 r#type: "checkbox",
                                 checked: config().settings.start_minimized,
@@ -93,6 +104,19 @@ pub fn Home(
                                 },
                             }
                             "启动时最小化到托盘"
+                        }
+                        label { class: "flex items-center gap-2 text-sm text-text-secondary cursor-pointer",
+                            input {
+                                r#type: "checkbox",
+                                checked: config().settings.dark_mode,
+                                class: "w-4 h-4 accent-accent",
+                                onchange: move |_| {
+                                    let mut cfg = config();
+                                    cfg.settings.dark_mode = !cfg.settings.dark_mode;
+                                    save_and_notify(cfg);
+                                },
+                            }
+                            "暗色模式"
                         }
                     }
                 }
@@ -143,16 +167,16 @@ pub fn Home(
                 div {
                     class: "fixed inset-0 bg-black/60 flex items-center justify-center z-50",
                     div { class: "bg-bg-card rounded-lg p-6 w-[350px] shadow-xl",
-                        h3 { class: "text-lg text-white mb-4", "确认删除" }
-                        p { class: "text-gray-300 text-sm mb-6", "确定要删除这个快捷键配置吗？此操作不可撤销。" }
+                        h3 { class: "text-lg text-text-primary mb-4", "确认删除" }
+                        p { class: "text-text-secondary text-sm mb-6", "确定要删除这个快捷键配置吗？此操作不可撤销。" }
                         div { class: "flex justify-end gap-3",
                             button {
-                                class: "px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer",
+                                class: "px-4 py-2 text-text-secondary hover:text-text-primary transition-colors cursor-pointer",
                                 onclick: move |_| delete_confirm.set(None),
                                 "取消"
                             }
                             button {
-                                class: "px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition-colors cursor-pointer",
+                                class: "px-4 py-2 bg-red-600 text-text-primary rounded hover:bg-red-500 transition-colors cursor-pointer",
                                 onclick: move |_| {
                                     let mut cfg = config();
                                     cfg.shortcuts.retain(|s| s.id != del_id);

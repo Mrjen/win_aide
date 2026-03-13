@@ -75,6 +75,28 @@ fn App() -> Element {
 
     let mut config = use_signal(|| config::load_config());
 
+    // 轮询托盘菜单事件
+    use_future(move || async move {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+            if let Some(event) = tray::poll_tray_event() {
+                match event {
+                    tray::TrayEvent::Show => {
+                        let window = dioxus::desktop::window();
+                        window.set_visible(true);
+                        window.set_focus();
+                    }
+                    tray::TrayEvent::TogglePause => {
+                        // TODO: 暂停/恢复快捷键
+                    }
+                    tray::TrayEvent::Quit => {
+                        std::process::exit(0);
+                    }
+                }
+            }
+        }
+    });
+
     rsx! {
         document::Link { rel: "stylesheet", href: TAILWIND_CSS }
 

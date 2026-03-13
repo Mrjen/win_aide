@@ -13,6 +13,7 @@ dirs = "6"
 tray-icon = "0.19"
 muda = "0.16"
 rfd = "0.15"
+tokio = { version = "1.50.0", features = ["rt", "time"] }
 
 [dependencies.windows]
 version = "0.58"

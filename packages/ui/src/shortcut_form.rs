@@ -31,7 +31,6 @@ pub fn ShortcutForm(
     conflict_message: Option<String>,
     on_save: EventHandler<ShortcutFormData>,
     on_cancel: EventHandler<()>,
-    on_browse: EventHandler<()>,
 ) -> Element {
     let mut name = use_signal(|| initial.name.clone());
     let mut exe_name = use_signal(|| initial.exe_name.clone());
@@ -92,7 +91,24 @@ pub fn ShortcutForm(
                         }
                         button {
                             class: "px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors cursor-pointer text-sm",
-                            onclick: move |_| on_browse.call(()),
+                            onclick: move |_| {
+                                let file = rfd::FileDialog::new()
+                                    .add_filter("可执行文件", &["exe"])
+                                    .pick_file();
+                                if let Some(path) = file {
+                                    let path_str = path.to_string_lossy().to_string();
+                                    let file_name = path.file_name()
+                                        .map(|n| n.to_string_lossy().to_string())
+                                        .unwrap_or_default();
+                                    exe_path.set(path_str);
+                                    if exe_name().is_empty() {
+                                        exe_name.set(file_name.clone());
+                                    }
+                                    if name().is_empty() {
+                                        name.set(file_name.trim_end_matches(".exe").to_string());
+                                    }
+                                }
+                            },
                             "浏览..."
                         }
                     }

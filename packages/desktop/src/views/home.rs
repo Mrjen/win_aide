@@ -200,26 +200,6 @@ pub fn Home(
                         show_form.set(false);
                     },
                     on_cancel: move |_| show_form.set(false),
-                    on_browse: move |_| {
-                        let file = rfd::FileDialog::new()
-                            .add_filter("可执行文件", &["exe"])
-                            .pick_file();
-                        if let Some(path) = file {
-                            let path_str = path.to_string_lossy().to_string();
-                            let file_name = path.file_name()
-                                .map(|n| n.to_string_lossy().to_string())
-                                .unwrap_or_default();
-                            form_data.with_mut(|d| {
-                                d.exe_path = path_str;
-                                if d.exe_name.is_empty() {
-                                    d.exe_name = file_name.clone();
-                                }
-                                if d.name.is_empty() {
-                                    d.name = file_name.trim_end_matches(".exe").to_string();
-                                }
-                            });
-                        }
-                    },
                 }
             }
         }

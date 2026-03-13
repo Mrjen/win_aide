@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+pub use ui::Modifier;
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct AppConfig {
     pub version: u32,
@@ -21,13 +23,6 @@ pub struct Shortcut {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum Modifier {
-    Alt,
-    Ctrl,
-    Win,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Settings {
     pub auto_start: bool,
     pub start_minimized: bool,
@@ -43,20 +38,6 @@ impl Default for AppConfig {
                 start_minimized: true,
             },
         }
-    }
-}
-
-impl Modifier {
-    pub fn display_name(&self) -> &str {
-        match self {
-            Modifier::Alt => "Alt",
-            Modifier::Ctrl => "Ctrl",
-            Modifier::Win => "Win",
-        }
-    }
-
-    pub fn all() -> &'static [Modifier] {
-        &[Modifier::Alt, Modifier::Ctrl, Modifier::Win]
     }
 }
 

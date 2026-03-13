@@ -24,3 +24,6 @@ pub use navbar::Navbar;
 
 mod shortcut_list;
 pub use shortcut_list::{ShortcutList, ShortcutRow};
+
+mod shortcut_form;
+pub use shortcut_form::{ShortcutForm, ShortcutFormData};

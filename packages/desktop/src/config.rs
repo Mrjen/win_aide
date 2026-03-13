@@ -26,6 +26,12 @@ pub struct Shortcut {
 pub struct Settings {
     pub auto_start: bool,
     pub start_minimized: bool,
+    #[serde(default = "default_dark_mode")]
+    pub dark_mode: bool,
+}
+
+fn default_dark_mode() -> bool {
+    true
 }
 
 impl Default for AppConfig {
@@ -36,6 +42,7 @@ impl Default for AppConfig {
             settings: Settings {
                 auto_start: false,
                 start_minimized: true,
+                dark_mode: true,
             },
         }
     }
@@ -101,6 +108,7 @@ mod tests {
         assert!(config.shortcuts.is_empty());
         assert!(!config.settings.auto_start);
         assert!(config.settings.start_minimized);
+        assert!(config.settings.dark_mode);
     }
 
     #[test]
@@ -119,6 +127,7 @@ mod tests {
             settings: Settings {
                 auto_start: true,
                 start_minimized: true,
+                dark_mode: true,
             },
         };
 

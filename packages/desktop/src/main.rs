@@ -6,6 +6,7 @@ use views::{Blog, Home};
 mod config;
 mod hotkey;
 mod launcher;
+mod tray;
 mod views;
 
 #[derive(Debug, Clone, Routable, PartialEq)]

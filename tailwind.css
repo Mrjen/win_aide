@@ -1,25 +1,128 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: #fafaf8;
-  --color-bg-card: #f0efe9;
-  --color-accent: #5b6fa3;
-  --color-accent-focus: #4a5d8e;
-  --color-text-primary: #1a1a1a;
+  /* 背景层级 */
+  --color-bg-primary: #f8f8f6;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: #f0efe9;
+  --color-bg-input: #f5f5f3;
+
+  /* 强调色 */
+  --color-accent: #4f6bc5;
+  --color-accent-focus: #3d56a8;
+  --color-accent-subtle: #eef1fa;
+
+  /* 文字 */
+  --color-text-primary: #111827;
   --color-text-secondary: #6b7280;
   --color-text-muted: #9ca3af;
-  --color-border-default: #d1d5db;
-  --color-border-subtle: #e5e7eb;
+
+  /* 边框 */
+  --color-border-default: #e2e4e9;
+  --color-border-subtle: #f0f1f3;
+
+  /* 危险色 */
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-subtle: #fef2f2;
+
+  /* 警告色 */
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #f59e0b;
+  --color-warning-text: #92400e;
+
+  /* 成功色 */
+  --color-success: #059669;
+  --color-success-subtle: #ecfdf5;
 }
 
 .dark {
-  --color-bg-primary: #0f1116;
-  --color-bg-card: #1e222d;
-  --color-accent: #91a4d2;
+  /* 背景层级 */
+  --color-bg-primary: #0c0d12;
+  --color-bg-card: #161922;
+  --color-bg-hover: #1e222d;
+  --color-bg-input: #1a1e28;
+
+  /* 强调色 */
+  --color-accent: #8da2d6;
   --color-accent-focus: #6d85c6;
-  --color-text-primary: #ffffff;
+  --color-accent-subtle: #1c2236;
+
+  /* 文字 */
+  --color-text-primary: #f3f4f6;
   --color-text-secondary: #9ca3af;
   --color-text-muted: #6b7280;
-  --color-border-default: #374151;
-  --color-border-subtle: #1f2937;
+
+  /* 边框 */
+  --color-border-default: #2a2f3c;
+  --color-border-subtle: #1e222d;
+
+  /* 危险色 */
+  --color-danger: #ef4444;
+  --color-danger-hover: #f87171;
+  --color-danger-subtle: #1c1012;
+
+  /* 警告色 */
+  --color-warning-bg: #1c1a0e;
+  --color-warning-border: #d97706;
+  --color-warning-text: #fbbf24;
+
+  /* 成功色 */
+  --color-success: #34d399;
+  --color-success-subtle: #0c1f17;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* 选择框样式 */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+/* 复选框增强 */
+input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: 4px;
+  background: var(--color-bg-input);
+  cursor: pointer;
+  position: relative;
+  transition: all 150ms ease;
+}
+input[type="checkbox"]:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4.5px;
+  top: 1.5px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+input[type="checkbox"]:hover {
+  border-color: var(--color-accent);
 }

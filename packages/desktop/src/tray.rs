@@ -30,9 +30,14 @@ fn create_default_icon() -> Icon {
     Icon::from_rgba(rgba, size, size).expect("无法创建托盘图标")
 }
 
+/// 托盘实例，包含图标和暂停菜单项引用
+pub struct Tray {
+    pub _icon: TrayIcon,
+    pub pause_item: MenuItem,
+}
+
 /// 初始化系统托盘
-/// 返回 TrayIcon 实例（必须保持存活否则托盘图标会消失）
-pub fn create_tray() -> TrayIcon {
+pub fn create_tray() -> Tray {
     let menu = Menu::new();
 
     let show_item = MenuItem::with_id(MENU_SHOW, "显示主窗口", true, None);
@@ -45,12 +50,17 @@ pub fn create_tray() -> TrayIcon {
     let _ = menu.append(&PredefinedMenuItem::separator());
     let _ = menu.append(&quit_item);
 
-    TrayIconBuilder::new()
+    let icon = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
         .with_tooltip("Win Aide - 快捷键启动器")
         .with_icon(create_default_icon())
         .build()
-        .expect("无法创建系统托盘")
+        .expect("无法创建系统托盘");
+
+    Tray {
+        _icon: icon,
+        pause_item,
+    }
 }
 
 /// 轮询托盘菜单事件（非阻塞）

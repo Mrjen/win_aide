@@ -23,6 +23,10 @@ pub struct BackendChannels {
 
 static BACKEND_CHANNELS: std::sync::Mutex<Option<BackendChannels>> = std::sync::Mutex::new(None);
 
+thread_local! {
+    static TRAY_INSTANCE: std::cell::RefCell<Option<tray::Tray>> = const { std::cell::RefCell::new(None) };
+}
+
 fn main() {
     let initial_config = config::load_config();
 
@@ -42,7 +46,9 @@ fn main() {
     );
 
     // 创建系统托盘（必须在 main 线程中创建）
-    let _tray = tray::create_tray();
+    TRAY_INSTANCE.with(|t| {
+        *t.borrow_mut() = Some(tray::create_tray());
+    });
 
     // 通过全局状态传递 channels 给 Dioxus 组件
     BACKEND_CHANNELS
@@ -76,21 +82,46 @@ fn App() -> Element {
     let mut config = use_signal(|| config::load_config());
 
     // 轮询托盘菜单事件
-    use_future(move || async move {
-        loop {
-            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-            if let Some(event) = tray::poll_tray_event() {
-                match event {
-                    tray::TrayEvent::Show => {
-                        let window = dioxus::desktop::window();
-                        window.set_visible(true);
-                        window.set_focus();
-                    }
-                    tray::TrayEvent::TogglePause => {
-                        // TODO: 暂停/恢复快捷键
-                    }
-                    tray::TrayEvent::Quit => {
-                        std::process::exit(0);
+    let tray_channels = channels.clone();
+    use_future(move || {
+        let channels = tray_channels.clone();
+        async move {
+            let mut paused = false;
+            loop {
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                if let Some(event) = tray::poll_tray_event() {
+                    match event {
+                        tray::TrayEvent::Show => {
+                            let window = dioxus::desktop::window();
+                            window.set_visible(true);
+                            window.set_focus();
+                        }
+                        tray::TrayEvent::TogglePause => {
+                            paused = !paused;
+                            if paused {
+                                if let Ok(tx) = channels.hotkey_tx.lock() {
+                                    let _ = tx.send(hotkey::HotkeyCommand::UnregisterAll);
+                                }
+                                TRAY_INSTANCE.with(|t| {
+                                    if let Some(tray) = t.borrow().as_ref() {
+                                        tray.pause_item.set_text("恢复所有快捷键");
+                                    }
+                                });
+                            } else {
+                                let cfg = config::load_config();
+                                if let Ok(tx) = channels.hotkey_tx.lock() {
+                                    let _ = tx.send(hotkey::HotkeyCommand::RegisterAll(cfg.shortcuts));
+                                }
+                                TRAY_INSTANCE.with(|t| {
+                                    if let Some(tray) = t.borrow().as_ref() {
+                                        tray.pause_item.set_text("暂停所有快捷键");
+                                    }
+                                });
+                            }
+                        }
+                        tray::TrayEvent::Quit => {
+                            std::process::exit(0);
+                        }
                     }
                 }
             }

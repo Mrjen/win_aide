@@ -19,6 +19,8 @@ pub struct HotkeyEvent {
 pub enum HotkeyCommand {
     /// 注册一组快捷键（会先注销所有旧的）
     RegisterAll(Vec<Shortcut>),
+    /// 注销所有快捷键（暂停）
+    UnregisterAll,
     /// 停止监听并退出线程
     Shutdown,
 }
@@ -75,6 +77,14 @@ pub fn start_hotkey_listener() -> (mpsc::Sender<HotkeyCommand>, mpsc::Receiver<H
                                 }
                             }
                         }
+                    }
+                    HotkeyCommand::UnregisterAll => {
+                        for &id in registered_ids.keys() {
+                            unsafe {
+                                let _ = UnregisterHotKey(HWND::default(), id);
+                            }
+                        }
+                        registered_ids.clear();
                     }
                     HotkeyCommand::Shutdown => {
                         // 注销所有快捷键

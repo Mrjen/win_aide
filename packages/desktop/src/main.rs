@@ -81,6 +81,7 @@ fn App() -> Element {
 
     let mut config = use_signal(|| config::load_config());
     let mut paused = use_signal(|| false);
+    let mut dark_mode = use_signal(|| config().settings.dark_mode);
 
     // 轮询托盘菜单事件
     let tray_channels = channels.clone();
@@ -131,11 +132,13 @@ fn App() -> Element {
     rsx! {
         document::Link { rel: "stylesheet", href: TAILWIND_CSS }
 
-        div { class: "bg-bg-primary text-white font-sans min-h-screen",
+        div { class: if dark_mode() { "dark bg-bg-primary text-text-primary font-sans min-h-screen" } else { "bg-bg-primary text-text-primary font-sans min-h-screen" },
             Home {
                 config: config,
                 paused: paused,
+                dark_mode: dark_mode,
                 on_config_changed: move |new_config: AppConfig| {
+                    dark_mode.set(new_config.settings.dark_mode);
                     config.set(new_config.clone());
 
                     // 同步开机自启状态

@@ -3,6 +3,7 @@ use dioxus::prelude::*;
 use ui::Navbar;
 use views::{Blog, Home};
 
+mod config;
 mod views;
 
 #[derive(Debug, Clone, Routable, PartialEq)]

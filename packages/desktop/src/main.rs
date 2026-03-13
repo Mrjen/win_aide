@@ -26,6 +26,9 @@ static BACKEND_CHANNELS: std::sync::Mutex<Option<BackendChannels>> = std::sync::
 fn main() {
     let initial_config = config::load_config();
 
+    // 同步开机自启状态
+    autostart::set_autostart(initial_config.settings.auto_start);
+
     // 启动快捷键监听线程
     let (hotkey_cmd_tx, hotkey_event_rx) = hotkey::start_hotkey_listener();
     let _ = hotkey_cmd_tx.send(hotkey::HotkeyCommand::RegisterAll(
@@ -69,6 +72,9 @@ fn App() -> Element {
                 config: config,
                 on_config_changed: move |new_config: AppConfig| {
                     config.set(new_config.clone());
+
+                    // 同步开机自启状态
+                    autostart::set_autostart(new_config.settings.auto_start);
 
                     // 通知快捷键线程更新注册
                     if let Ok(tx) = channels.hotkey_tx.lock() {

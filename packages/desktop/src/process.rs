@@ -13,39 +13,47 @@ use windows::Win32::System::Threading::{
 };
 use windows::Win32::UI::Shell::ExtractIconExW;
 use windows::Win32::UI::WindowsAndMessaging::{
-    DestroyIcon, EnumWindows, GetIconInfo, GetWindowThreadProcessId, IsWindowVisible,
+    DestroyIcon, EnumWindows, GetIconInfo, GetWindowThreadProcessId, IsWindowVisible, HICON,
 };
 
-struct EnumData {
-    /// exe_path (lowercase) -> (name, exe_name, exe_path_original)
-    processes: HashMap<String, (String, String, String)>,
+const ICON_SIZE: i32 = 32;
+
+struct ProcessEntry {
+    display_name: String,
+    exe_name: String,
+    exe_path: String,
 }
 
-unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+struct EnumData {
+    /// exe_path (lowercase) -> ProcessEntry
+    processes: HashMap<String, ProcessEntry>,
+}
+
+unsafe extern "system" fn enum_processes_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let data = &mut *(lparam.0 as *mut EnumData);
 
     if !IsWindowVisible(hwnd).as_bool() {
         return TRUE;
     }
 
-    let mut pid: u32 = 0;
-    GetWindowThreadProcessId(hwnd, Some(&mut pid));
-    if pid == 0 {
+    let mut process_id: u32 = 0;
+    GetWindowThreadProcessId(hwnd, Some(&mut process_id));
+    if process_id == 0 {
         return TRUE;
     }
 
-    if let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
-        let mut buf = [0u16; 1024];
-        let mut size = buf.len() as u32;
+    if let Ok(process) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) {
+        let mut buffer = [0u16; 1024];
+        let mut size = buffer.len() as u32;
         if QueryFullProcessImageNameW(
-            handle,
+            process,
             PROCESS_NAME_FORMAT(0),
-            windows::core::PWSTR(buf.as_mut_ptr()),
+            windows::core::PWSTR(buffer.as_mut_ptr()),
             &mut size,
         )
         .is_ok()
         {
-            let path = OsString::from_wide(&buf[..size as usize]);
+            let path = OsString::from_wide(&buffer[..size as usize]);
             let path_str = path.to_string_lossy().to_string();
             let key = path_str.to_lowercase();
 
@@ -56,21 +64,27 @@ unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
                     .unwrap_or(&path_str)
                     .to_string();
                 let display_name = file_name.trim_end_matches(".exe").to_string();
-                data.processes
-                    .insert(key, (display_name, file_name, path_str));
+                data.processes.insert(
+                    key,
+                    ProcessEntry {
+                        display_name,
+                        exe_name: file_name,
+                        exe_path: path_str,
+                    },
+                );
             }
         }
-        let _ = CloseHandle(handle);
+        let _ = CloseHandle(process);
     }
 
     TRUE
 }
 
-/// 从 exe 文件路径提取 32x32 图标的 RGBA 字节
+/// 从 exe 文件路径提取图标的 RGBA 字节
 fn extract_icon_rgba(exe_path: &str) -> Option<Vec<u8>> {
     unsafe {
         let wide_path: Vec<u16> = exe_path.encode_utf16().chain(std::iter::once(0)).collect();
-        let mut large_icon = [windows::Win32::UI::WindowsAndMessaging::HICON::default(); 1];
+        let mut large_icon = [HICON::default(); 1];
 
         let count = ExtractIconExW(
             windows::core::PCWSTR(wide_path.as_ptr()),
@@ -91,10 +105,8 @@ fn extract_icon_rgba(exe_path: &str) -> Option<Vec<u8>> {
     }
 }
 
-/// 将 HICON 转换为 32x32 RGBA 字节
-unsafe fn icon_to_rgba(
-    hicon: windows::Win32::UI::WindowsAndMessaging::HICON,
-) -> Option<Vec<u8>> {
+/// 将 HICON 转换为 RGBA 字节
+unsafe fn icon_to_rgba(hicon: HICON) -> Option<Vec<u8>> {
     let mut icon_info = windows::Win32::UI::WindowsAndMessaging::ICONINFO::default();
     if GetIconInfo(hicon, &mut icon_info).is_err() {
         return None;
@@ -108,15 +120,14 @@ unsafe fn icon_to_rgba(
         return None;
     }
 
-    let size: i32 = 32;
     let hdc = CreateCompatibleDC(None);
     let old = SelectObject(hdc, hbm_color);
 
     let mut bmi = BITMAPINFO {
         bmiHeader: BITMAPINFOHEADER {
             biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
-            biWidth: size,
-            biHeight: -size, // top-down
+            biWidth: ICON_SIZE,
+            biHeight: -ICON_SIZE, // top-down
             biPlanes: 1,
             biBitCount: 32,
             biCompression: BI_RGB.0,
@@ -125,13 +136,13 @@ unsafe fn icon_to_rgba(
         ..Default::default()
     };
 
-    let mut pixels = vec![0u8; (size * size * 4) as usize];
+    let mut pixels = vec![0u8; (ICON_SIZE * ICON_SIZE * 4) as usize];
 
     let lines = GetDIBits(
         hdc,
         hbm_color,
         0,
-        size as u32,
+        ICON_SIZE as u32,
         Some(pixels.as_mut_ptr() as *mut _),
         &mut bmi,
         DIB_RGB_COLORS,
@@ -164,7 +175,7 @@ pub fn list_windowed_processes() -> Vec<ProcessInfo> {
 
     unsafe {
         let _ = EnumWindows(
-            Some(enum_callback),
+            Some(enum_processes_callback),
             LPARAM(&mut data as *mut EnumData as isize),
         );
     }
@@ -172,12 +183,12 @@ pub fn list_windowed_processes() -> Vec<ProcessInfo> {
     let mut result: Vec<ProcessInfo> = data
         .processes
         .into_values()
-        .map(|(name, exe_name, exe_path)| {
-            let icon_rgba = extract_icon_rgba(&exe_path);
+        .map(|entry| {
+            let icon_rgba = extract_icon_rgba(&entry.exe_path);
             ProcessInfo {
-                name,
-                exe_name,
-                exe_path,
+                name: entry.display_name,
+                exe_name: entry.exe_name,
+                exe_path: entry.exe_path,
                 icon_rgba,
             }
         })

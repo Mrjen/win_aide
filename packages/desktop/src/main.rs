@@ -61,6 +61,7 @@ fn main() {
                         .with_title("Win Aide")
                         .with_inner_size(dioxus::desktop::tao::dpi::LogicalSize::new(800, 600)),
                 )
+                .with_close_behaviour(dioxus::desktop::WindowCloseBehaviour::WindowHides)
                 .with_menu(None),
         )
         .launch(App);

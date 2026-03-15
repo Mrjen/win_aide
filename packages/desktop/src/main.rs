@@ -40,6 +40,15 @@ fn main() {
         initial_config.shortcuts.clone(),
     ));
 
+    // 注册窗口循环热键
+    if initial_config.settings.window_cycle.enabled {
+        let wc = &initial_config.settings.window_cycle;
+        let _ = hotkey_cmd_tx.send(hotkey::HotkeyCommand::RegisterWindowCycle {
+            modifier: wc.modifier.clone(),
+            key: wc.key,
+        });
+    }
+
     // 启动 launcher 处理线程
     let launcher_update_tx = launcher::start_launcher(
         hotkey_event_rx,
@@ -113,6 +122,14 @@ fn App() -> Element {
                                 let cfg = config::load_config();
                                 if let Ok(tx) = channels.hotkey_tx.lock() {
                                     let _ = tx.send(hotkey::HotkeyCommand::RegisterAll(cfg.shortcuts));
+                                    // 恢复窗口循环热键
+                                    if cfg.settings.window_cycle.enabled {
+                                        let wc = &cfg.settings.window_cycle;
+                                        let _ = tx.send(hotkey::HotkeyCommand::RegisterWindowCycle {
+                                            modifier: wc.modifier.clone(),
+                                            key: wc.key,
+                                        });
+                                    }
                                 }
                                 TRAY_INSTANCE.with(|t| {
                                     if let Some(tray) = t.borrow().as_ref() {
@@ -150,6 +167,15 @@ fn App() -> Element {
                         let _ = tx.send(hotkey::HotkeyCommand::RegisterAll(
                             new_config.shortcuts.clone(),
                         ));
+                        // 同步窗口循环热键
+                        let _ = tx.send(hotkey::HotkeyCommand::UnregisterWindowCycle);
+                        if new_config.settings.window_cycle.enabled {
+                            let wc = &new_config.settings.window_cycle;
+                            let _ = tx.send(hotkey::HotkeyCommand::RegisterWindowCycle {
+                                modifier: wc.modifier.clone(),
+                                key: wc.key,
+                            });
+                        }
                     }
 
                     // 通知 launcher 线程更新配置

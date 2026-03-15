@@ -727,7 +727,7 @@ dependencies = [
 
 [[package]]
 name = "desktop"
-version = "1.0.0"
+version = "1.1.1"
 dependencies = [
  "dioxus",
  "dirs",
@@ -4888,7 +4888,7 @@ dependencies = [
 
 [[package]]
 name = "ui"
-version = "1.0.0"
+version = "1.1.1"
 dependencies = [
  "base64",
  "dioxus",

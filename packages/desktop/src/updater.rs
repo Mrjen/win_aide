@@ -22,8 +22,9 @@ pub struct Asset {
 }
 
 /// 更新状态机
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum UpdateState {
+    #[default]
     Idle,
     Checking,
     Available(UpdateInfo),
@@ -40,12 +41,6 @@ pub struct UpdateInfo {
     pub body: String,
     pub download_url: String,
     pub size: u64,
-}
-
-impl Default for UpdateState {
-    fn default() -> Self {
-        Self::Idle
-    }
 }
 
 const GITHUB_API_URL: &str = "https://api.github.com/repos/Mrjen/win_aide/releases/latest";

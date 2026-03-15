@@ -13,7 +13,10 @@ dirs = "6"
 tray-icon = "0.19"
 muda = "0.16"
 rfd = "0.15"
-tokio = { version = "1.50.0", features = ["rt", "time"] }
+tokio = { version = "1.50.0", features = ["rt", "time", "fs"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+semver = "1"
+futures-util = "0.3"
 
 [dependencies.windows]
 version = "0.58"

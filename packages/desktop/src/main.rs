@@ -13,7 +13,7 @@ mod views;
 use config::AppConfig;
 use views::Home;
 
-const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
+const TAILWIND_CSS: &str = include_str!("../assets/tailwind.css");
 
 /// 通过 context 共享的后台通信通道
 #[derive(Clone)]
@@ -149,7 +149,7 @@ fn App() -> Element {
     });
 
     rsx! {
-        document::Link { rel: "stylesheet", href: TAILWIND_CSS }
+        document::Style { {TAILWIND_CSS} }
 
         div { class: if dark_mode() { "dark bg-bg-primary text-text-primary font-sans min-h-screen" } else { "bg-bg-primary text-text-primary font-sans min-h-screen" },
             Home {

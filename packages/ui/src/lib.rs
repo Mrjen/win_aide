@@ -43,3 +43,6 @@ pub use shortcut_form::{ShortcutForm, ShortcutFormData};
 
 mod process_picker;
 pub use process_picker::{ProcessPicker, rgba_to_bmp_data_uri};
+
+mod update_dialog;
+pub use update_dialog::{UpdateDialog, UpdateDialogState};

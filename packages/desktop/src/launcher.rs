@@ -10,9 +10,15 @@ use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    AllowSetForegroundWindow, EnumWindows, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
-    SetForegroundWindow, ShowWindow, ASFW_ANY, SW_RESTORE,
+    AllowSetForegroundWindow, EnumWindows, GetForegroundWindow, GetWindowThreadProcessId,
+    IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow, ASFW_ANY, SW_RESTORE,
 };
+
+/// 窗口循环方向
+pub enum Direction {
+    Next,
+    Prev,
+}
 
 struct FindWindowData {
     exe_name: String,
@@ -78,6 +84,78 @@ fn find_window_by_exe(exe_name: &str) -> Option<HWND> {
     data.found_hwnd
 }
 
+struct CollectWindowsData {
+    target_pid: u32,
+    windows: Vec<HWND>,
+}
+
+/// EnumWindows 回调：收集指定进程的所有可见窗口
+unsafe extern "system" fn collect_windows_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+    let data = &mut *(lparam.0 as *mut CollectWindowsData);
+
+    if !IsWindowVisible(hwnd).as_bool() {
+        return TRUE;
+    }
+
+    let mut pid: u32 = 0;
+    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+
+    if pid == data.target_pid {
+        data.windows.push(hwnd);
+    }
+
+    TRUE
+}
+
+/// 查找指定进程 ID 的所有可见窗口
+fn find_all_windows_by_pid(pid: u32) -> Vec<HWND> {
+    let mut data = CollectWindowsData {
+        target_pid: pid,
+        windows: Vec::new(),
+    };
+
+    unsafe {
+        let _ = EnumWindows(
+            Some(collect_windows_callback),
+            LPARAM(&mut data as *mut CollectWindowsData as isize),
+        );
+    }
+
+    data.windows
+}
+
+/// 在同一应用的多个窗口间循环切换
+pub fn cycle_window(direction: Direction) {
+    unsafe {
+        let active = GetForegroundWindow();
+        if active.0.is_null() {
+            return;
+        }
+
+        let mut pid: u32 = 0;
+        GetWindowThreadProcessId(active, Some(&mut pid));
+        if pid == 0 {
+            return;
+        }
+
+        let windows = find_all_windows_by_pid(pid);
+        if windows.len() <= 1 {
+            return;
+        }
+
+        let Some(index) = windows.iter().position(|&w| w == active) else {
+            return;
+        };
+
+        let target_index = match direction {
+            Direction::Next => (index + 1) % windows.len(),
+            Direction::Prev => (index + windows.len() - 1) % windows.len(),
+        };
+
+        activate_window(windows[target_index]);
+    }
+}
+
 /// 激活已有窗口
 fn activate_window(hwnd: HWND) {
     unsafe {
@@ -129,8 +207,18 @@ pub fn start_launcher(
 
             // 检查快捷键事件
             if let Ok(event) = event_rx.recv_timeout(std::time::Duration::from_millis(50)) {
-                if let Some(shortcut) = shortcut_map.get(&event.shortcut_id) {
-                    launch_or_activate(shortcut);
+                match event {
+                    HotkeyEvent::ShortcutTriggered { shortcut_id } => {
+                        if let Some(shortcut) = shortcut_map.get(&shortcut_id) {
+                            launch_or_activate(shortcut);
+                        }
+                    }
+                    HotkeyEvent::WindowCycleNext => {
+                        cycle_window(Direction::Next);
+                    }
+                    HotkeyEvent::WindowCyclePrev => {
+                        cycle_window(Direction::Prev);
+                    }
                 }
             }
         }

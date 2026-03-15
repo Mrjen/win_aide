@@ -222,6 +222,74 @@ pub fn Home(
                             "暗色模式"
                         }
                     }
+                    // ── 窗口循环切换设置 ──
+                    div { class: "mt-4 pt-4 border-t border-border-subtle",
+                        div { class: "flex items-center gap-2 mb-3",
+                            span { class: "text-xs font-medium text-text-muted uppercase tracking-wide", "同应用窗口循环切换" }
+                        }
+                        div { class: "flex flex-wrap items-center gap-x-6 gap-y-3",
+                            // 启用开关
+                            label { class: "inline-flex items-center gap-2.5 text-sm text-text-secondary cursor-pointer select-none",
+                                input {
+                                    r#type: "checkbox",
+                                    checked: config().settings.window_cycle.enabled,
+                                    onchange: move |_| {
+                                        let mut cfg = config();
+                                        cfg.settings.window_cycle.enabled = !cfg.settings.window_cycle.enabled;
+                                        save_and_notify(cfg);
+                                    },
+                                }
+                                "启用"
+                            }
+                            // 修饰键选择
+                            label { class: "inline-flex items-center gap-2 text-sm text-text-secondary",
+                                span { "修饰键" }
+                                select {
+                                    class: "px-2 py-1 bg-bg-input border border-border-default rounded text-sm text-text-primary cursor-pointer",
+                                    value: config().settings.window_cycle.modifier.display_name(),
+                                    onchange: move |e: Event<FormData>| {
+                                        let mut cfg = config();
+                                        cfg.settings.window_cycle.modifier = match e.value().as_str() {
+                                            "Ctrl" => ui::Modifier::Ctrl,
+                                            "Win" => ui::Modifier::Win,
+                                            _ => ui::Modifier::Alt,
+                                        };
+                                        save_and_notify(cfg);
+                                    },
+                                    option { value: "Alt", selected: config().settings.window_cycle.modifier == ui::Modifier::Alt, "Alt" }
+                                    option { value: "Ctrl", selected: config().settings.window_cycle.modifier == ui::Modifier::Ctrl, "Ctrl" }
+                                    option { value: "Win", selected: config().settings.window_cycle.modifier == ui::Modifier::Win, "Win" }
+                                }
+                            }
+                            // 按键输入
+                            label { class: "inline-flex items-center gap-2 text-sm text-text-secondary",
+                                span { "按键" }
+                                input {
+                                    r#type: "text",
+                                    class: "w-12 px-2 py-1 bg-bg-input border border-border-default rounded text-sm text-text-primary text-center",
+                                    value: config().settings.window_cycle.key.to_string(),
+                                    maxlength: 1,
+                                    onchange: move |e: Event<FormData>| {
+                                        if let Some(ch) = e.value().chars().next() {
+                                            let mut cfg = config();
+                                            cfg.settings.window_cycle.key = ch;
+                                            save_and_notify(cfg);
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                        // 提示信息
+                        p { class: "mt-2 text-xs text-text-muted",
+                            {format!(
+                                "{}+{} 下一个窗口 / {}+Shift+{} 上一个窗口",
+                                config().settings.window_cycle.modifier.display_name(),
+                                config().settings.window_cycle.key,
+                                config().settings.window_cycle.modifier.display_name(),
+                                config().settings.window_cycle.key,
+                            )}
+                        }
+                    }
                 }
             }
 
@@ -337,8 +405,8 @@ pub fn Home(
                 }
             }
 
-            // ── 新增/编辑弹窗 ──
-            if show_form() {
+            // ── 新增/编辑弹窗（进程选择弹窗打开时隐藏）──
+            if show_form() && !show_process_picker() {
                 ShortcutForm {
                     key: "{form_key}",
                     initial: form_data(),

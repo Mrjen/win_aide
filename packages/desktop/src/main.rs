@@ -8,6 +8,7 @@ mod hotkey;
 mod launcher;
 mod process;
 mod tray;
+mod updater;
 mod views;
 
 use config::AppConfig;

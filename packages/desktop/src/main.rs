@@ -91,6 +91,8 @@ fn App() -> Element {
         BACKEND_CHANNELS.lock().unwrap().take().expect("BackendChannels 未初始化")
     });
 
+    let update_state = use_context_provider(|| Signal::new(updater::UpdateState::Idle));
+
     let mut config = use_signal(config::load_config);
     let mut paused = use_signal(|| false);
     let mut dark_mode = use_signal(|| config().settings.dark_mode);
@@ -139,6 +141,15 @@ fn App() -> Element {
                                     }
                                 });
                             }
+                        }
+                        tray::TrayEvent::CheckUpdate => {
+                            let mut us = update_state;
+                            spawn(async move {
+                                updater::check_update(&mut us).await;
+                            });
+                            let window = dioxus::desktop::window();
+                            window.set_visible(true);
+                            window.set_focus();
                         }
                         tray::TrayEvent::Quit => {
                             std::process::exit(0);

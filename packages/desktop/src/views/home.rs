@@ -10,6 +10,8 @@ pub fn Home(
     dark_mode: Signal<bool>,
     on_config_changed: EventHandler<AppConfig>,
 ) -> Element {
+    let mut update_state: Signal<crate::updater::UpdateState> = use_context();
+
     let mut show_form = use_signal(|| false);
     let mut editing_id = use_signal(|| None::<String>);
     let mut conflict_msg = use_signal(|| None::<String>);
@@ -21,6 +23,15 @@ pub fn Home(
     let mut process_loading = use_signal(|| false);
     let mut form_key = use_signal(|| 0u32);
     let mut window_cycle_conflict = use_signal(|| None::<String>);
+
+    // 定时检查更新
+    use_future(move || async move {
+        tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+        loop {
+            crate::updater::check_update(&mut update_state).await;
+            tokio::time::sleep(std::time::Duration::from_secs(4 * 3600)).await;
+        }
+    });
 
     // 将 config shortcuts 转换为 UI 行
     let rows: Vec<ShortcutRow> = config()
@@ -465,8 +476,30 @@ pub fn Home(
             // ── 底部状态栏 ──
             div { class: "px-5 py-2 bg-bg-card border-t border-border-default flex items-center justify-between text-xs text-text-muted",
                 span { "共 {shortcut_count} 个快捷键，{enabled_count} 个已启用" }
-                if paused() {
-                    span { class: "text-warning-text font-medium", "已暂停" }
+                div { class: "flex items-center gap-3",
+                    if paused() {
+                        span { class: "text-warning-text font-medium", "已暂停" }
+                    }
+                    match update_state() {
+                        crate::updater::UpdateState::Checking => rsx! {
+                            span { class: "text-text-muted animate-pulse", "检查更新中..." }
+                        },
+                        crate::updater::UpdateState::Available(_) => rsx! {
+                            span { class: "text-accent font-medium", "有新版本可用" }
+                        },
+                        _ => rsx! {
+                            button {
+                                class: "hover:text-text-primary cursor-pointer transition-colors",
+                                title: "点击检查更新",
+                                onclick: move |_| {
+                                    spawn(async move {
+                                        crate::updater::check_update(&mut update_state).await;
+                                    });
+                                },
+                                "v{crate::updater::current_version()}"
+                            }
+                        },
+                    }
                 }
             }
 
@@ -604,6 +637,77 @@ pub fn Home(
                     on_cancel: move |_| {
                         show_process_picker.set(false);
                     },
+                }
+            }
+
+            // ── 更新弹窗 ──
+            {
+                use ui::{UpdateDialog, UpdateDialogState};
+                match update_state() {
+                    crate::updater::UpdateState::Available(ref info) => {
+                        let info_clone = info.clone();
+                        rsx! {
+                            UpdateDialog {
+                                state: UpdateDialogState::Available {
+                                    version: info.version.clone(),
+                                    name: info.name.clone(),
+                                    body: info.body.clone(),
+                                },
+                                on_update: move |_| {
+                                    let url = info_clone.download_url.clone();
+                                    let size = info_clone.size;
+                                    spawn(async move {
+                                        if let Err(e) = crate::updater::download_update(&mut update_state, &url, size).await {
+                                            update_state.set(crate::updater::UpdateState::Error(e));
+                                        }
+                                    });
+                                },
+                                on_dismiss: move |_| update_state.set(crate::updater::UpdateState::Idle),
+                                on_retry: move |_| {
+                                    spawn(async move {
+                                        crate::updater::check_update(&mut update_state).await;
+                                    });
+                                },
+                                on_install: move |_| {},
+                            }
+                        }
+                    }
+                    crate::updater::UpdateState::Downloading { progress } => rsx! {
+                        UpdateDialog {
+                            state: UpdateDialogState::Downloading { progress },
+                            on_update: move |_| {},
+                            on_dismiss: move |_| {},
+                            on_retry: move |_| {},
+                            on_install: move |_| {},
+                        }
+                    },
+                    crate::updater::UpdateState::Ready => rsx! {
+                        UpdateDialog {
+                            state: UpdateDialogState::Ready,
+                            on_update: move |_| {},
+                            on_dismiss: move |_| update_state.set(crate::updater::UpdateState::Idle),
+                            on_retry: move |_| {},
+                            on_install: move |_| {
+                                if let Err(e) = crate::updater::apply_update() {
+                                    update_state.set(crate::updater::UpdateState::Error(e));
+                                }
+                            },
+                        }
+                    },
+                    crate::updater::UpdateState::Error(ref msg) => rsx! {
+                        UpdateDialog {
+                            state: UpdateDialogState::Error { message: msg.clone() },
+                            on_update: move |_| {},
+                            on_dismiss: move |_| update_state.set(crate::updater::UpdateState::Idle),
+                            on_retry: move |_| {
+                                spawn(async move {
+                                    crate::updater::check_update(&mut update_state).await;
+                                });
+                            },
+                            on_install: move |_| {},
+                        }
+                    },
+                    _ => rsx! {},
                 }
             }
         }

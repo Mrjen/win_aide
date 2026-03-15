@@ -6,6 +6,7 @@ use tray_icon::{
 /// 托盘菜单项 ID
 pub const MENU_SHOW: &str = "show";
 pub const MENU_PAUSE: &str = "pause";
+pub const MENU_CHECK_UPDATE: &str = "check_update";
 pub const MENU_QUIT: &str = "quit";
 
 /// 托盘事件
@@ -13,6 +14,7 @@ pub const MENU_QUIT: &str = "quit";
 pub enum TrayEvent {
     Show,
     TogglePause,
+    CheckUpdate,
     Quit,
 }
 
@@ -47,6 +49,9 @@ pub fn create_tray() -> Tray {
     let _ = menu.append(&show_item);
     let _ = menu.append(&PredefinedMenuItem::separator());
     let _ = menu.append(&pause_item);
+    let check_update_item = MenuItem::with_id(MENU_CHECK_UPDATE, "检查更新", true, None);
+    let _ = menu.append(&PredefinedMenuItem::separator());
+    let _ = menu.append(&check_update_item);
     let _ = menu.append(&PredefinedMenuItem::separator());
     let _ = menu.append(&quit_item);
 
@@ -69,6 +74,7 @@ pub fn poll_tray_event() -> Option<TrayEvent> {
         match event.id.0.as_str() {
             MENU_SHOW => Some(TrayEvent::Show),
             MENU_PAUSE => Some(TrayEvent::TogglePause),
+            MENU_CHECK_UPDATE => Some(TrayEvent::CheckUpdate),
             MENU_QUIT => Some(TrayEvent::Quit),
             _ => None,
         }

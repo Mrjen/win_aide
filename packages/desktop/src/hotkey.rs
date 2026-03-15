@@ -60,7 +60,6 @@ pub fn start_hotkey_listener() -> (mpsc::Sender<HotkeyCommand>, mpsc::Receiver<H
 
     thread::spawn(move || {
         let mut registered_ids: HashMap<i32, String> = HashMap::new();
-        let mut next_id: i32 = 1;
         let mut window_cycle_registered = false;
 
         loop {
@@ -75,9 +74,9 @@ pub fn start_hotkey_listener() -> (mpsc::Sender<HotkeyCommand>, mpsc::Receiver<H
                             }
                         }
                         registered_ids.clear();
-                        next_id = 1;
 
                         // 注册新快捷键
+                        let mut next_id: i32 = 1;
                         for shortcut in &shortcuts {
                             if !shortcut.enabled {
                                 continue;

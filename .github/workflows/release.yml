@@ -17,6 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Tailwind CSS
+        run: npx @tailwindcss/cli -i tailwind.css -o packages/desktop/assets/tailwind.css --minify
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 

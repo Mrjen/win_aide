@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install npm dependencies
         run: npm ci
@@ -34,7 +35,15 @@ jobs:
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Cache dx CLI
+        id: cache-dx
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/dx.exe
+          key: dx-cli-0.7.1-windows
+
       - name: Install dx CLI
+        if: steps.cache-dx.outputs.cache-hit != 'true'
         run: cargo install dioxus-cli@0.7.1 --locked
 
       - name: Cargo check

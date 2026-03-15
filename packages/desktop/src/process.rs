@@ -78,7 +78,7 @@ unsafe extern "system" fn enum_processes_callback(hwnd: HWND, lparam: LPARAM) ->
 }
 
 /// 从 exe 文件路径提取图标的 RGBA 字节
-fn extract_icon_rgba(exe_path: &str) -> Option<Vec<u8>> {
+pub fn extract_icon_rgba(exe_path: &str) -> Option<Vec<u8>> {
     unsafe {
         let wide_path: Vec<u16> = exe_path.encode_utf16().chain(std::iter::once(0)).collect();
         let mut large_icon = [HICON::default(); 1];

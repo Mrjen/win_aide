@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use crate::ProcessInfo;
 
 /// 将 32x32 RGBA 像素数据编码为 BMP 格式的 base64 data URI
-fn rgba_to_bmp_data_uri(rgba: &[u8]) -> String {
+pub fn rgba_to_bmp_data_uri(rgba: &[u8]) -> String {
     let size: u32 = 32;
     let pixel_data_size = size * size * 4;
     let file_size = 14 + 40 + pixel_data_size;

@@ -42,4 +42,4 @@ mod shortcut_form;
 pub use shortcut_form::{ShortcutForm, ShortcutFormData};
 
 mod process_picker;
-pub use process_picker::ProcessPicker;
+pub use process_picker::{ProcessPicker, rgba_to_bmp_data_uri};

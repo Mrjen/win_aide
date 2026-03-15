@@ -138,10 +138,13 @@ pub fn cycle_window(direction: Direction) {
             return;
         }
 
-        let windows = find_all_windows_by_pid(pid);
+        let mut windows = find_all_windows_by_pid(pid);
         if windows.len() <= 1 {
             return;
         }
+
+        // 按 HWND 值排序，确保循环顺序不受 Z-order 影响
+        windows.sort_by_key(|w| w.0 as usize);
 
         let Some(index) = windows.iter().position(|&w| w == active) else {
             return;

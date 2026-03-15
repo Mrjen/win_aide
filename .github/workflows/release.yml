@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install dx CLI
+        run: cargo install dioxus-cli@0.7.1 --locked
+
+      - name: Cargo check
+        run: cargo check --workspace
+
+      - name: Cargo clippy
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Cargo test
+        run: cargo test --workspace
+
+      - name: Build release
+        working-directory: packages/desktop
+        run: dx build --release
+
+      - name: Find and rename executable
+        id: find_exe
+        shell: bash
+        run: |
+          EXE_PATH=$(find target/dx/desktop -name "*.exe" -path "*/release/*" | head -1)
+          if [ -z "$EXE_PATH" ]; then
+            echo "ERROR: No exe found in target/dx/desktop"
+            find target/dx/ -name "*.exe" || true
+            exit 1
+          fi
+          TAG="${GITHUB_REF_NAME}"
+          cp "$EXE_PATH" "win_aide-${TAG}.exe"
+          echo "exe_name=win_aide-${TAG}.exe" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.find_exe.outputs.exe_name }}
+          generate_release_notes: true

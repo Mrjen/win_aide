@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个基于 **Dioxus 0.7.1** 的多平台 Rust 项目（代号 win_aide），使用 Cargo workspace 管理，支持 Web、Desktop 和 Mobile 三个平台。
+这是一个基于 **Dioxus 0.7.1** 的 Windows 桌面应用（代号 win_aide），使用 Cargo workspace 管理，提供全局快捷键启动器功能。
 
 ## 常用命令
 
@@ -12,15 +12,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 安装 dx CLI（首次需要）
 curl -sSL http://dioxus.dev/install.sh | sh
 
-# 开发运行（需先 cd 到对应平台目录）
-cd packages/web && dx serve        # Web 平台
+# 开发运行（需先 cd 到 desktop 目录）
 cd packages/desktop && dx serve    # Desktop 平台
-cd packages/mobile && dx serve --platform android   # Android
-cd packages/mobile && dx serve --platform ios        # iOS
 
 # 构建检查
 cargo check                        # 全工作区类型检查
-cargo check -p web                 # 检查单个包
 cargo clippy                       # Lint（含 Dioxus 特定规则）
 cargo build -p desktop             # 构建单个包
 cargo test                         # 运行测试
@@ -28,15 +24,10 @@ cargo test                         # 运行测试
 
 ## 架构
 
-Cargo workspace 包含四个成员包，共享 `dioxus = "0.7.1"` 工作区依赖：
+Cargo workspace 包含两个成员包，共享 `dioxus = "0.7.1"` 工作区依赖：
 
-- **`packages/ui`** — 跨平台共享 UI 组件库（Hero、Navbar、Echo），不依赖任何平台特定功能
-- **`packages/web`** — Web 平台入口，使用 `dioxus/web` 特性，编译为 WebAssembly
-- **`packages/desktop`** — Desktop 平台入口，使用 `dioxus/desktop` 特性
-- **`packages/mobile`** — Mobile 平台入口，使用 `dioxus/mobile` 特性
-- **`packages/api`**（未注册到 workspace）— 全栈服务器函数，使用 `dioxus/fullstack` + `dioxus/server`
-
-每个平台包结构一致：`main.rs`（路由定义 + 启动）→ `views/`（Home、Blog 页面组件）。三个平台共享相同的路由结构（`/` 和 `/blog/:id`），但视图实现可独立演化。
+- **`packages/ui`** — 共享 UI 组件库（Navbar、ShortcutList、ShortcutForm、ProcessPicker）
+- **`packages/desktop`** — Desktop 平台入口，使用 `dioxus/desktop` 特性，集成 Windows API 实现热键、进程管理、系统托盘等功能
 
 ## Dioxus 0.7 关键约定
 

@@ -65,7 +65,8 @@ pub fn ProcessPicker(
 
             // 弹窗
             div {
-                class: "bg-bg-card rounded-xl shadow-2xl border border-border-subtle w-[520px] max-h-[70vh] flex flex-col",
+                class: "bg-bg-card rounded-xl shadow-2xl border border-border-default flex flex-col overflow-hidden",
+                    style: "width: 520px; max-height: 70vh;",
                 onclick: move |e| e.stop_propagation(),
 
                 // 标题栏

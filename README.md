@@ -1,62 +1,110 @@
-# Development
+# Win Aide
 
-Your new workspace contains a member crate for each of the web, desktop and mobile platforms, and a `ui` crate for components that are shared between multiple platforms:
+一款轻量级的 Windows 全局快捷键启动器，使用 Rust + [Dioxus](https://dioxuslabs.com/) 构建。
 
-```
-your_project/
-├─ README.md
-├─ Cargo.toml
-└─ packages/
-   ├─ web/
-   │  └─ ... # Web specific UI/logic
-   ├─ desktop/
-   │  └─ ... # Desktop specific UI/logic
-   ├─ mobile/
-   │  └─ ... # Mobile specific UI/logic
-   └─  ui/
-      └─ ... # Component shared between multiple platforms
-```
+通过自定义全局热键快速启动或激活应用程序，支持同应用多窗口循环切换，让你的 Windows 桌面操作更加高效。
 
-## Platform crates
+## 功能特性
 
-Each platform crate contains the entry point for the platform, and any assets, components and dependencies that are specific to that platform. For example, the desktop crate in the workspace looks something like this:
+- **全局热键启动** — 为常用应用绑定 `Alt/Ctrl/Win + 按键` 快捷键，一键启动或激活窗口
+- **窗口循环切换** — 使用 `Alt+\`` 在同一应用的多个窗口间快速切换（支持自定义按键）
+- **系统托盘常驻** — 关闭窗口自动最小化到托盘，随时通过托盘菜单恢复
+- **运行中进程选择** — 从当前运行的应用列表中直接选择，无需手动填写路径
+- **冲突检测** — 自动检测重复的热键分配，避免快捷键冲突
+- **开机自启** — 可选开机自动启动，注册到 Windows 启动项
+- **深色模式** — 支持明暗主题切换
+- **持久化配置** — 配置自动保存到 `~/.win_aide/config.json`
 
-```
-desktop/ # The desktop crate contains all platform specific UI, logic and dependencies for the desktop app
-├─ assets/ # Assets used by the desktop app - Any platform specific assets should go in this folder
-├─ src/
-│  ├─ main.rs # The entrypoint for the desktop app. It also defines the routes for the desktop platform
-│  ├─ views/ # The views each route will render in the desktop version of the app
-│  │  ├─ mod.rs # Defines the module for the views route and re-exports the components for each route
-│  │  ├─ blog.rs # The component that will render at the /blog/:id route
-│  │  ├─ home.rs # The component that will render at the / route
-├─ Cargo.toml # The desktop crate's Cargo.toml - This should include all desktop specific dependencies
-```
+## 安装
 
-When you start developing with the workspace setup each of the platform crates will look almost identical. The UI starts out exactly the same on all platforms. However, as you continue developing your application, this setup makes it easy to let the views for each platform change independently.
+### 从源码构建
 
-## Shared UI crate
+**前置依赖：**
 
-The workspace contains a `ui` crate with components that are shared between multiple platforms. You should put any UI elements you want to use in multiple platforms in this crate. You can also put some shared client side logic in this crate, but be careful to not pull in platform specific dependencies. The `ui` crate starts out something like this:
-
-```
-ui/
-├─ src/
-│  ├─ lib.rs # The entrypoint for the ui crate
-│  ├─ hero.rs # The Hero component that will be used in every platform
-│  ├─ navbar.rs # The Navbar component that will be used in the layout of every platform's router
-```
-
-### Serving Your App
-
-Navigate to the platform crate of your choice:
-```bash
-cd web
-```
-
-and serve:
+- [Rust](https://rustup.rs/)（推荐使用 `rustup` 安装）
+- [Dioxus CLI](https://dioxuslabs.com/)
 
 ```bash
+# 安装 Dioxus CLI
+cargo install dioxus-cli
+
+# 克隆仓库
+git clone https://github.com/your-username/win_aide.git
+cd win_aide
+
+# 构建
+cargo build -p desktop --release
+```
+
+构建产物位于 `target/release/desktop.exe`。
+
+### 开发运行
+
+```bash
+cd packages/desktop
 dx serve
 ```
 
+## 使用方法
+
+1. 启动应用后，点击 **添加** 按钮创建新的快捷键
+2. 设置应用名称，选择可执行文件路径（或点击「从运行中的程序选择」）
+3. 选择修饰键（Alt / Ctrl / Win）和触发按键
+4. 保存后即可通过全局热键启动或激活目标应用
+
+### 窗口循环切换
+
+默认使用 `Alt + \`` 在当前应用的多个窗口间切换，`Alt + Shift + \`` 反向切换。可在设置面板中自定义按键或关闭此功能。
+
+### 系统托盘
+
+- 关闭窗口会自动隐藏到系统托盘
+- 右键托盘图标可以：显示主窗口、暂停/恢复所有快捷键、退出应用
+
+## 项目结构
+
+```text
+win_aide/
+├─ Cargo.toml              # Workspace 配置
+├─ packages/
+│  ├─ desktop/              # 桌面应用主程序
+│  │  ├─ src/
+│  │  │  ├─ main.rs         # 应用入口与初始化
+│  │  │  ├─ config.rs       # 配置管理（加载/保存/冲突检测）
+│  │  │  ├─ hotkey.rs       # Windows 全局热键注册与监听
+│  │  │  ├─ launcher.rs     # 应用启动/激活/窗口循环
+│  │  │  ├─ process.rs      # 运行中进程枚举与图标提取
+│  │  │  ├─ tray.rs         # 系统托盘图标与菜单
+│  │  │  ├─ autostart.rs    # 开机自启注册表管理
+│  │  │  └─ views/          # UI 页面组件
+│  │  └─ assets/            # 静态资源
+│  └─ ui/                   # 跨平台共享 UI 组件库
+│     └─ src/
+│        ├─ lib.rs           # 组件导出与公共类型
+│        ├─ shortcut_list.rs # 快捷键列表组件
+│        ├─ shortcut_form.rs # 快捷键编辑表单
+│        ├─ process_picker.rs# 进程选择器
+│        └─ navbar.rs        # 导航栏
+```
+
+## 技术栈
+
+- **语言** — [Rust](https://www.rust-lang.org/)
+- **UI 框架** — [Dioxus 0.7](https://dioxuslabs.com/)（基于 WebView 的桌面渲染）
+- **样式** — [Tailwind CSS](https://tailwindcss.com/)
+- **系统集成** — [windows-rs](https://github.com/microsoft/windows-rs)（Win32 API 调用）
+- **系统托盘** — [tray-icon](https://crates.io/crates/tray-icon) + [muda](https://crates.io/crates/muda)
+
+## 参与贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建你的特性分支（`git checkout -b feat/amazing-feature`）
+3. 提交你的修改（`git commit -m 'feat: 添加某个功能'`）
+4. 推送到分支（`git push origin feat/amazing-feature`）
+5. 创建一个 Pull Request
+
+## 许可证
+
+本项目基于 [MIT 许可证](LICENSE) 开源。

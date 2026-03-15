@@ -75,6 +75,7 @@ fn main() {
                 .with_window(
                     dioxus::desktop::tao::window::WindowBuilder::new()
                         .with_title("Win Aide")
+                        .with_decorations(false)
                         .with_inner_size(dioxus::desktop::tao::dpi::LogicalSize::new(800, 600)),
                 )
                 .with_close_behaviour(dioxus::desktop::WindowCloseBehaviour::WindowHides)

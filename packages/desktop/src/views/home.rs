@@ -45,8 +45,96 @@ pub fn Home(
         on_config_changed.call(new_config);
     };
 
+    let mut is_maximized = use_signal(|| false);
+
     rsx! {
         div { class: "flex flex-col h-screen",
+            // ── 自定义标题栏（拖拽区 + 窗口控制按钮）──
+            div {
+                class: "flex items-center justify-end bg-bg-card select-none shrink-0 pr-1",
+                onmousedown: move |_| {
+                    dioxus::desktop::window().drag();
+                },
+                // 窗口控制按钮
+                div {
+                    class: "flex items-center",
+                    onmousedown: move |e| e.stop_propagation(),
+                    // 最小化
+                    button {
+                        class: "inline-flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer",
+                        style: "width:48px;height:36px",
+                        onclick: move |_| {
+                            dioxus::desktop::window().window.set_minimized(true);
+                        },
+                        svg {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: "14",
+                            height: "14",
+                            view_box: "0 0 12 12",
+                            fill: "none",
+                            stroke: "currentColor",
+                            stroke_width: "1.5",
+                            path { d: "M2 6h8" }
+                        }
+                    }
+                    // 最大化 / 还原
+                    button {
+                        class: "inline-flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer",
+                        style: "width:48px;height:36px",
+                        onclick: move |_| {
+                            let win = dioxus::desktop::window();
+                            let maximized = win.window.is_maximized();
+                            win.window.set_maximized(!maximized);
+                            is_maximized.set(!maximized);
+                        },
+                        if is_maximized() {
+                            svg {
+                                xmlns: "http://www.w3.org/2000/svg",
+                                width: "14",
+                                height: "14",
+                                view_box: "0 0 12 12",
+                                fill: "none",
+                                stroke: "currentColor",
+                                stroke_width: "1.2",
+                                path { d: "M3.5 1.5h7v7" }
+                                rect { x: "1.5", y: "3.5", width: "7", height: "7" }
+                            }
+                        } else {
+                            svg {
+                                xmlns: "http://www.w3.org/2000/svg",
+                                width: "14",
+                                height: "14",
+                                view_box: "0 0 12 12",
+                                fill: "none",
+                                stroke: "currentColor",
+                                stroke_width: "1.2",
+                                rect { x: "1.5", y: "1.5", width: "9", height: "9" }
+                            }
+                        }
+                    }
+                    // 关闭（隐藏到托盘）
+                    button {
+                        class: "inline-flex items-center justify-center text-text-muted hover:text-white hover:bg-[#e81123] transition-colors cursor-pointer",
+                        style: "width:48px;height:36px",
+                        onclick: move |_| {
+                            dioxus::desktop::window().set_visible(false);
+                        },
+                        svg {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: "14",
+                            height: "14",
+                            view_box: "0 0 12 12",
+                            fill: "none",
+                            stroke: "currentColor",
+                            stroke_width: "1.5",
+                            stroke_linecap: "round",
+                            path { d: "M2 2l8 8" }
+                            path { d: "M10 2l-8 8" }
+                        }
+                    }
+                }
+            }
+
             // ── 顶部工具栏 ──
             Navbar {
                 div { class: "flex items-center gap-3",
@@ -82,6 +170,7 @@ pub fn Home(
                     }
                 }
                 div { class: "flex items-center gap-1.5",
+                    onmousedown: move |e| e.stop_propagation(),
                     // 添加快捷键按钮
                     button {
                         class: "inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white rounded-md hover:bg-accent-focus transition-colors cursor-pointer text-sm font-medium",

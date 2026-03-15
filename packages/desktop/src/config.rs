@@ -28,10 +28,29 @@ pub struct Settings {
     pub start_minimized: bool,
     #[serde(default = "default_dark_mode")]
     pub dark_mode: bool,
+    #[serde(default)]
+    pub window_cycle: WindowCycleSettings,
 }
 
 fn default_dark_mode() -> bool {
     true
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct WindowCycleSettings {
+    pub enabled: bool,
+    pub modifier: Modifier,
+    pub key: char,
+}
+
+impl Default for WindowCycleSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            modifier: Modifier::Alt,
+            key: '`',
+        }
+    }
 }
 
 impl Default for AppConfig {
@@ -43,6 +62,7 @@ impl Default for AppConfig {
                 auto_start: false,
                 start_minimized: true,
                 dark_mode: true,
+                window_cycle: WindowCycleSettings::default(),
             },
         }
     }
@@ -109,6 +129,9 @@ mod tests {
         assert!(!config.settings.auto_start);
         assert!(config.settings.start_minimized);
         assert!(config.settings.dark_mode);
+        assert!(config.settings.window_cycle.enabled);
+        assert_eq!(config.settings.window_cycle.modifier, Modifier::Alt);
+        assert_eq!(config.settings.window_cycle.key, '`');
     }
 
     #[test]
@@ -128,6 +151,7 @@ mod tests {
                 auto_start: true,
                 start_minimized: true,
                 dark_mode: true,
+                window_cycle: WindowCycleSettings::default(),
             },
         };
 

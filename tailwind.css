@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  /* 背景层级 */
-  --color-bg-primary: #f8f8f6;
+  /* 背景层级 — 冷调白，干净清爽 */
+  --color-bg-primary: #f8fafc;
   --color-bg-card: #ffffff;
-  --color-bg-hover: #f0efe9;
-  --color-bg-input: #f5f5f3;
+  --color-bg-hover: #f1f5f9;
+  --color-bg-input: #f1f5f9;
 
-  /* 强调色 */
-  --color-accent: #4f6bc5;
-  --color-accent-focus: #3d56a8;
-  --color-accent-subtle: #eef1fa;
+  /* 强调色 — Modern Indigo */
+  --color-accent: #6366f1;
+  --color-accent-focus: #4f46e5;
+  --color-accent-subtle: #eef2ff;
 
-  /* 文字 */
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
+  /* 文字 — Slate 色阶，高可读性 */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
 
-  /* 边框 */
-  --color-border-default: #e2e4e9;
-  --color-border-subtle: #f0f1f3;
+  /* 边框 — 冷调灰 */
+  --color-border-default: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
 
   /* 危险色 */
-  --color-danger: #dc2626;
-  --color-danger-hover: #b91c1c;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
   --color-danger-subtle: #fef2f2;
 
   /* 警告色 */
@@ -32,35 +32,35 @@
   --color-warning-text: #92400e;
 
   /* 成功色 */
-  --color-success: #059669;
+  --color-success: #10b981;
   --color-success-subtle: #ecfdf5;
 }
 
 .dark {
-  /* 背景层级 */
-  --color-bg-primary: #0c0d12;
-  --color-bg-card: #161922;
-  --color-bg-hover: #1e222d;
-  --color-bg-input: #1a1e28;
+  /* 背景层级 — 深海蓝黑，层次分明 */
+  --color-bg-primary: #0b0f1a;
+  --color-bg-card: #111827;
+  --color-bg-hover: #1e293b;
+  --color-bg-input: #1e293b;
 
-  /* 强调色 */
-  --color-accent: #8da2d6;
-  --color-accent-focus: #6d85c6;
-  --color-accent-subtle: #1c2236;
+  /* 强调色 — Indigo 亮色变体 */
+  --color-accent: #818cf8;
+  --color-accent-focus: #6366f1;
+  --color-accent-subtle: #1e1b4b;
 
-  /* 文字 */
-  --color-text-primary: #f3f4f6;
-  --color-text-secondary: #9ca3af;
-  --color-text-muted: #6b7280;
+  /* 文字 — 高对比度 */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
 
-  /* 边框 */
-  --color-border-default: #2a2f3c;
-  --color-border-subtle: #1e222d;
+  /* 边框 — 微妙分隔 */
+  --color-border-default: #1e293b;
+  --color-border-subtle: #1e293b;
 
   /* 危险色 */
-  --color-danger: #ef4444;
-  --color-danger-hover: #f87171;
-  --color-danger-subtle: #1c1012;
+  --color-danger: #f87171;
+  --color-danger-hover: #fca5a5;
+  --color-danger-subtle: #1f1215;
 
   /* 警告色 */
   --color-warning-bg: #1c1a0e;

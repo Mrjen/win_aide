@@ -34,6 +34,7 @@ pub fn Home(
             modifier: s.modifier.display_name().to_string(),
             hotkey: s.key,
             enabled: s.enabled && !paused(),
+            icon_data: None,
         })
         .collect();
 

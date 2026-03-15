@@ -9,6 +9,7 @@ pub struct ShortcutRow {
     pub modifier: String,
     pub hotkey: char,
     pub enabled: bool,
+    pub icon_data: Option<String>,
 }
 
 #[component]
@@ -21,7 +22,8 @@ pub fn ShortcutList(
     rsx! {
         div { class: "w-full",
             // 表头
-            div { class: "grid grid-cols-[44px_140px_1fr_1fr_88px] gap-3 px-5 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider border-b border-border-subtle",
+            div { class: "grid grid-cols-[44px_36px_140px_1fr_1fr_88px] gap-3 px-5 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider border-b border-border-subtle",
+                span {}
                 span {}
                 span { "快捷键" }
                 span { "应用名称" }
@@ -39,9 +41,9 @@ pub fn ShortcutList(
                     rsx! {
                         div {
                             class: if is_enabled {
-                                "grid grid-cols-[44px_140px_1fr_1fr_88px] gap-3 px-5 py-3 items-center border-b border-border-subtle hover:bg-bg-hover transition-colors group"
+                                "grid grid-cols-[44px_36px_140px_1fr_1fr_88px] gap-3 px-5 py-3 items-center border-b border-border-subtle hover:bg-bg-hover transition-colors group"
                             } else {
-                                "grid grid-cols-[44px_140px_1fr_1fr_88px] gap-3 px-5 py-3 items-center border-b border-border-subtle hover:bg-bg-hover transition-colors group opacity-50"
+                                "grid grid-cols-[44px_36px_140px_1fr_1fr_88px] gap-3 px-5 py-3 items-center border-b border-border-subtle hover:bg-bg-hover transition-colors group opacity-50"
                             },
                             // 启用复选框
                             div { class: "flex items-center justify-center",
@@ -49,6 +51,33 @@ pub fn ShortcutList(
                                     r#type: "checkbox",
                                     checked: shortcut.enabled,
                                     onchange: move |_| on_toggle.call(id_toggle.clone()),
+                                }
+                            }
+                            // 应用图标
+                            div { class: "flex items-center justify-center",
+                                if let Some(ref icon_uri) = shortcut.icon_data {
+                                    img {
+                                        src: "{icon_uri}",
+                                        width: "24",
+                                        height: "24",
+                                        class: "shrink-0 rounded",
+                                    }
+                                } else {
+                                    div { class: "w-6 h-6 shrink-0 rounded bg-accent/20 flex items-center justify-center",
+                                        svg {
+                                            xmlns: "http://www.w3.org/2000/svg",
+                                            width: "14",
+                                            height: "14",
+                                            view_box: "0 0 24 24",
+                                            fill: "none",
+                                            stroke: "currentColor",
+                                            stroke_width: "2",
+                                            class: "text-accent",
+                                            rect { x: "2", y: "3", width: "20", height: "14", rx: "2" }
+                                            path { d: "M8 21h8" }
+                                            path { d: "M12 17v4" }
+                                        }
+                                    }
                                 }
                             }
                             // 快捷键徽章

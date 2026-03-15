@@ -57,22 +57,19 @@ unsafe extern "system" fn enum_processes_callback(hwnd: HWND, lparam: LPARAM) ->
             let path_str = path.to_string_lossy().to_string();
             let key = path_str.to_lowercase();
 
-            if !data.processes.contains_key(&key) {
+            data.processes.entry(key).or_insert_with(|| {
                 let file_name = path_str
                     .rsplit('\\')
                     .next()
                     .unwrap_or(&path_str)
                     .to_string();
                 let display_name = file_name.trim_end_matches(".exe").to_string();
-                data.processes.insert(
-                    key,
-                    ProcessEntry {
-                        display_name,
-                        exe_name: file_name,
-                        exe_path: path_str,
-                    },
-                );
-            }
+                ProcessEntry {
+                    display_name,
+                    exe_name: file_name,
+                    exe_path: path_str,
+                }
+            });
         }
         let _ = CloseHandle(process);
     }
@@ -115,7 +112,7 @@ unsafe fn icon_to_rgba(hicon: HICON) -> Option<Vec<u8>> {
     let hbm_color = icon_info.hbmColor;
     if hbm_color.is_invalid() {
         if !icon_info.hbmMask.is_invalid() {
-            DeleteObject(icon_info.hbmMask);
+            let _ = DeleteObject(icon_info.hbmMask);
         }
         return None;
     }
@@ -149,10 +146,10 @@ unsafe fn icon_to_rgba(hicon: HICON) -> Option<Vec<u8>> {
     );
 
     SelectObject(hdc, old);
-    DeleteDC(hdc);
-    DeleteObject(hbm_color);
+    let _ = DeleteDC(hdc);
+    let _ = DeleteObject(hbm_color);
     if !icon_info.hbmMask.is_invalid() {
-        DeleteObject(icon_info.hbmMask);
+        let _ = DeleteObject(icon_info.hbmMask);
     }
 
     if lines == 0 {

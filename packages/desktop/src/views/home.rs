@@ -535,7 +535,7 @@ pub fn Home(
 
                         // 检查是否与窗口循环热键冲突
                         let wc = &cfg.settings.window_cycle;
-                        if wc.enabled && wc.modifier == data.modifier && wc.key.to_ascii_uppercase() == key_char.to_ascii_uppercase() {
+                        if wc.enabled && wc.modifier == data.modifier && wc.key.eq_ignore_ascii_case(&key_char) {
                             conflict_msg.set(Some(format!("快捷键 {} + {} 与窗口循环切换冲突", data.modifier.display_name(), key_char)));
                             return;
                         }

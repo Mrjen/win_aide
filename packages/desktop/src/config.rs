@@ -112,7 +112,7 @@ pub fn window_cycle_conflicts(
 ) -> Option<String> {
     shortcuts.iter().find(|s| {
         s.modifier == *modifier
-            && s.key.to_ascii_uppercase() == key.to_ascii_uppercase()
+            && s.key.eq_ignore_ascii_case(&key)
     }).map(|s| s.name.clone())
 }
 
@@ -125,8 +125,8 @@ pub fn has_conflict(
 ) -> bool {
     shortcuts.iter().any(|s| {
         s.modifier == *modifier
-            && s.key.to_ascii_uppercase() == key.to_ascii_uppercase()
-            && exclude_id.map_or(true, |id| s.id != id)
+            && s.key.eq_ignore_ascii_case(&key)
+            && exclude_id.is_none_or(|id| s.id != id)
     })
 }
 

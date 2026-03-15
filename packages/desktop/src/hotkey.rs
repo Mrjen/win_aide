@@ -167,22 +167,21 @@ pub fn start_hotkey_listener() -> (mpsc::Sender<HotkeyCommand>, mpsc::Receiver<H
             unsafe {
                 if PeekMessageW(&mut msg, HWND::default(), WM_HOTKEY, WM_HOTKEY, PM_REMOVE)
                     .as_bool()
+                    && msg.message == WM_HOTKEY
                 {
-                    if msg.message == WM_HOTKEY {
-                        let hotkey_id = msg.wParam.0 as i32;
-                        match hotkey_id {
-                            WINDOW_CYCLE_NEXT_ID => {
-                                let _ = event_tx.send(HotkeyEvent::WindowCycleNext);
-                            }
-                            WINDOW_CYCLE_PREV_ID => {
-                                let _ = event_tx.send(HotkeyEvent::WindowCyclePrev);
-                            }
-                            _ => {
-                                if let Some(shortcut_id) = registered_ids.get(&hotkey_id) {
-                                    let _ = event_tx.send(HotkeyEvent::ShortcutTriggered {
-                                        shortcut_id: shortcut_id.clone(),
-                                    });
-                                }
+                    let hotkey_id = msg.wParam.0 as i32;
+                    match hotkey_id {
+                        WINDOW_CYCLE_NEXT_ID => {
+                            let _ = event_tx.send(HotkeyEvent::WindowCycleNext);
+                        }
+                        WINDOW_CYCLE_PREV_ID => {
+                            let _ = event_tx.send(HotkeyEvent::WindowCyclePrev);
+                        }
+                        _ => {
+                            if let Some(shortcut_id) = registered_ids.get(&hotkey_id) {
+                                let _ = event_tx.send(HotkeyEvent::ShortcutTriggered {
+                                    shortcut_id: shortcut_id.clone(),
+                                });
                             }
                         }
                     }

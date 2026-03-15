@@ -90,7 +90,7 @@ fn App() -> Element {
         BACKEND_CHANNELS.lock().unwrap().take().expect("BackendChannels 未初始化")
     });
 
-    let mut config = use_signal(|| config::load_config());
+    let mut config = use_signal(config::load_config);
     let mut paused = use_signal(|| false);
     let mut dark_mode = use_signal(|| config().settings.dark_mode);
 

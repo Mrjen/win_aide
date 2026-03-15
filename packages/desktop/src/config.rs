@@ -103,6 +103,19 @@ pub fn save_config(config: &AppConfig) {
     fs::write(&path, json).expect("写入配置文件失败");
 }
 
+/// 检查窗口循环热键是否与用户快捷键冲突
+/// 返回冲突的快捷键名称（如有）
+pub fn window_cycle_conflicts(
+    shortcuts: &[Shortcut],
+    modifier: &Modifier,
+    key: char,
+) -> Option<String> {
+    shortcuts.iter().find(|s| {
+        s.modifier == *modifier
+            && s.key.to_ascii_uppercase() == key.to_ascii_uppercase()
+    }).map(|s| s.name.clone())
+}
+
 /// 检查快捷键是否冲突（同一 modifier + key 组合）
 pub fn has_conflict(
     shortcuts: &[Shortcut],

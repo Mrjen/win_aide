@@ -20,6 +20,7 @@ pub fn Home(
     let mut process_list = use_signal(Vec::<ProcessInfo>::new);
     let mut process_loading = use_signal(|| false);
     let mut form_key = use_signal(|| 0u32);
+    let mut window_cycle_conflict = use_signal(|| None::<String>);
 
     // 将 config shortcuts 转换为 UI 行
     let rows: Vec<ShortcutRow> = config()
@@ -248,13 +249,20 @@ pub fn Home(
                                     class: "px-2 py-1 bg-bg-input border border-border-default rounded text-sm text-text-primary cursor-pointer",
                                     value: config().settings.window_cycle.modifier.display_name(),
                                     onchange: move |e: Event<FormData>| {
-                                        let mut cfg = config();
-                                        cfg.settings.window_cycle.modifier = match e.value().as_str() {
+                                        let new_modifier = match e.value().as_str() {
                                             "Ctrl" => ui::Modifier::Ctrl,
                                             "Win" => ui::Modifier::Win,
                                             _ => ui::Modifier::Alt,
                                         };
-                                        save_and_notify(cfg);
+                                        let cfg = config();
+                                        if let Some(name) = config::window_cycle_conflicts(&cfg.shortcuts, &new_modifier, cfg.settings.window_cycle.key) {
+                                            window_cycle_conflict.set(Some(format!("与快捷键「{}」冲突", name)));
+                                        } else {
+                                            window_cycle_conflict.set(None);
+                                            let mut cfg = config();
+                                            cfg.settings.window_cycle.modifier = new_modifier;
+                                            save_and_notify(cfg);
+                                        }
                                     },
                                     option { value: "Alt", selected: config().settings.window_cycle.modifier == ui::Modifier::Alt, "Alt" }
                                     option { value: "Ctrl", selected: config().settings.window_cycle.modifier == ui::Modifier::Ctrl, "Ctrl" }
@@ -271,9 +279,15 @@ pub fn Home(
                                     maxlength: 1,
                                     onchange: move |e: Event<FormData>| {
                                         if let Some(ch) = e.value().chars().next() {
-                                            let mut cfg = config();
-                                            cfg.settings.window_cycle.key = ch;
-                                            save_and_notify(cfg);
+                                            let cfg = config();
+                                            if let Some(name) = config::window_cycle_conflicts(&cfg.shortcuts, &cfg.settings.window_cycle.modifier, ch) {
+                                                window_cycle_conflict.set(Some(format!("与快捷键「{}」冲突", name)));
+                                            } else {
+                                                window_cycle_conflict.set(None);
+                                                let mut cfg = config();
+                                                cfg.settings.window_cycle.key = ch;
+                                                save_and_notify(cfg);
+                                            }
                                         }
                                     },
                                 }
@@ -288,6 +302,12 @@ pub fn Home(
                                 config().settings.window_cycle.modifier.display_name(),
                                 config().settings.window_cycle.key,
                             )}
+                        }
+                        // 冲突提示
+                        if let Some(msg) = window_cycle_conflict() {
+                            p { class: "mt-1.5 text-xs text-danger font-medium",
+                                {msg}
+                            }
                         }
                     }
                 }
@@ -421,6 +441,13 @@ pub fn Home(
                         let cfg = config();
                         if config::has_conflict(&cfg.shortcuts, &data.modifier, key_char, data.id.as_deref()) {
                             conflict_msg.set(Some(format!("快捷键 {} + {} 已被占用", data.modifier.display_name(), key_char)));
+                            return;
+                        }
+
+                        // 检查是否与窗口循环热键冲突
+                        let wc = &cfg.settings.window_cycle;
+                        if wc.enabled && wc.modifier == data.modifier && wc.key.to_ascii_uppercase() == key_char.to_ascii_uppercase() {
+                            conflict_msg.set(Some(format!("快捷键 {} + {} 与窗口循环切换冲突", data.modifier.display_name(), key_char)));
                             return;
                         }
 

@@ -18,18 +18,14 @@ pub enum TrayEvent {
     Quit,
 }
 
-/// 创建默认图标（简单的彩色方块）
-fn create_default_icon() -> Icon {
-    // 16x16 RGBA 图标（蓝紫色，与主题 accent 色一致）
-    let size = 16u32;
-    let mut rgba = Vec::with_capacity((size * size * 4) as usize);
-    for _ in 0..size * size {
-        rgba.push(0x91); // R
-        rgba.push(0xa4); // G
-        rgba.push(0xd2); // B
-        rgba.push(0xFF); // A
-    }
-    Icon::from_rgba(rgba, size, size).expect("无法创建托盘图标")
+/// 从嵌入的 PNG 创建托盘图标
+fn create_icon_from_png() -> Icon {
+    let png_bytes = include_bytes!("../assets/logo.png");
+    let img = image::load_from_memory_with_format(png_bytes, image::ImageFormat::Png)
+        .expect("无法加载 logo.png")
+        .into_rgba8();
+    let (w, h) = img.dimensions();
+    Icon::from_rgba(img.into_raw(), w, h).expect("无法创建托盘图标")
 }
 
 /// 托盘实例，包含图标和暂停菜单项引用
@@ -58,7 +54,7 @@ pub fn create_tray() -> Tray {
     let icon = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
         .with_tooltip("Win Aide - 快捷键启动器")
-        .with_icon(create_default_icon())
+        .with_icon(create_icon_from_png())
         .build()
         .expect("无法创建系统托盘");
 

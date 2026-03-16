@@ -188,10 +188,31 @@ fn activate_window(hwnd: HWND) {
     }
 }
 
-/// 启动新进程
+/// 启动新进程（使用 ShellExecuteW 以支持各种路径类型）
 fn launch_process(exe_path: &str) {
-    use std::process::Command;
-    let _ = Command::new(exe_path).spawn();
+    use std::path::Path;
+    use windows::core::HSTRING;
+    use windows::Win32::UI::Shell::ShellExecuteW;
+    use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+    let path = Path::new(exe_path);
+    let file = HSTRING::from(exe_path);
+    // 将工作目录设为程序所在目录，避免某些程序因工作目录不对而启动失败
+    let dir = path
+        .parent()
+        .map(|p| HSTRING::from(p.as_os_str()))
+        .unwrap_or_default();
+
+    unsafe {
+        ShellExecuteW(
+            HWND::default(),
+            &HSTRING::from("open"),
+            &file,
+            None,
+            &dir,
+            SW_SHOWNORMAL,
+        );
+    }
 }
 
 /// LaunchOrActivate：如果应用已运行则激活窗口，否则启动

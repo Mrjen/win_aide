@@ -7,11 +7,12 @@ use std::sync::mpsc;
 use std::thread;
 use windows::Win32::Foundation::{CloseHandle, BOOL, HWND, LPARAM, TRUE};
 use windows::Win32::System::Threading::{
-    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
+    AttachThreadInput, GetCurrentThreadId, OpenProcess, QueryFullProcessImageNameW,
+    PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    AllowSetForegroundWindow, EnumWindows, GetForegroundWindow, GetWindowThreadProcessId,
-    IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow, ASFW_ANY, SW_RESTORE,
+    EnumWindows, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
+    SetForegroundWindow, ShowWindow, SW_RESTORE,
 };
 
 /// 窗口循环方向
@@ -165,8 +166,25 @@ fn activate_window(hwnd: HWND) {
         if IsIconic(hwnd).as_bool() {
             let _ = ShowWindow(hwnd, SW_RESTORE);
         }
-        let _ = AllowSetForegroundWindow(ASFW_ANY);
+
+        // 使用 AttachThreadInput 绕过 Windows 前台窗口锁定限制
+        // 当 win_aide 最小化到托盘时，它不是前台进程，
+        // 直接调用 SetForegroundWindow 会被系统拒绝
+        let foreground_hwnd = GetForegroundWindow();
+        let foreground_tid = GetWindowThreadProcessId(foreground_hwnd, None);
+        let current_tid = GetCurrentThreadId();
+
+        let attached = if foreground_tid != 0 && foreground_tid != current_tid {
+            AttachThreadInput(current_tid, foreground_tid, true).as_bool()
+        } else {
+            false
+        };
+
         let _ = SetForegroundWindow(hwnd);
+
+        if attached {
+            let _ = AttachThreadInput(current_tid, foreground_tid, false);
+        }
     }
 }
 

@@ -70,6 +70,17 @@ fn main() {
             launcher_tx: Arc::new(Mutex::new(launcher_update_tx)),
         });
 
+    // 加载窗口图标
+    let icon = {
+        let png_bytes = include_bytes!("../assets/logo.png");
+        let img = image::load_from_memory_with_format(png_bytes, image::ImageFormat::Png)
+            .expect("Failed to load logo.png")
+            .into_rgba8();
+        let (w, h) = img.dimensions();
+        dioxus::desktop::tao::window::Icon::from_rgba(img.into_raw(), w, h)
+            .expect("Failed to create window icon")
+    };
+
     dioxus::LaunchBuilder::new()
         .with_cfg(
             dioxus::desktop::Config::new()
@@ -77,6 +88,7 @@ fn main() {
                     dioxus::desktop::tao::window::WindowBuilder::new()
                         .with_title("Win Aide")
                         .with_decorations(false)
+                        .with_window_icon(Some(icon))
                         .with_inner_size(dioxus::desktop::tao::dpi::LogicalSize::new(800, 600)),
                 )
                 .with_close_behaviour(dioxus::desktop::WindowCloseBehaviour::WindowHides)

@@ -30,6 +30,7 @@ thread_local! {
 }
 
 fn main() {
+    let start_minimized = std::env::args().any(|a| a == "--minimized");
     let initial_config = config::load_config();
 
     // 同步开机自启状态
@@ -88,6 +89,7 @@ fn main() {
                     dioxus::desktop::tao::window::WindowBuilder::new()
                         .with_title("Win Aide")
                         .with_decorations(false)
+                        .with_visible(!start_minimized)
                         .with_window_icon(Some(icon))
                         .with_inner_size(dioxus::desktop::tao::dpi::LogicalSize::new(800, 600)),
                 )

@@ -28,8 +28,11 @@ fn enable_autostart() {
                 .to_string_lossy()
                 .to_string();
 
+            // 开机自启时添加 --minimized 参数，启动后直接最小化到托盘
+            let cmd = format!("\"{}\" --minimized", exe_path);
+
             let name = HSTRING::from(APP_NAME);
-            let value = HSTRING::from(&exe_path);
+            let value = HSTRING::from(&*cmd);
             let bytes: &[u8] = std::slice::from_raw_parts(
                 value.as_ptr() as *const u8,
                 (value.len() + 1) * 2, // 包含 null terminator

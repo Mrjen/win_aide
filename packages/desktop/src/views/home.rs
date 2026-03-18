@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use ui::{Navbar, ProcessInfo, ProcessPicker, ShortcutForm, ShortcutFormData, ShortcutList, ShortcutRow, rgba_to_bmp_data_uri};
+use ui::{Navbar, ProcessInfo, ProcessPicker, ShortcutForm, ShortcutFormData, ShortcutList, ShortcutRow, rgba_to_png_data_uri};
 
 use crate::config::{self, AppConfig, Shortcut};
 
@@ -39,7 +39,7 @@ pub fn Home(
         .iter()
         .map(|s| {
             let icon_data = crate::process::extract_icon_rgba(&s.exe_path)
-                .map(|rgba| rgba_to_bmp_data_uri(&rgba));
+                .map(|rgba| rgba_to_png_data_uri(&rgba));
             ShortcutRow {
                 id: s.id.clone(),
                 name: s.name.clone(),

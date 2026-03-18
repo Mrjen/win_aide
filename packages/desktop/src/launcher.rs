@@ -11,8 +11,9 @@ use windows::Win32::System::Threading::{
     PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    BringWindowToTop, EnumWindows, GetForegroundWindow, GetWindowThreadProcessId, IsIconic,
-    IsWindowVisible, SetForegroundWindow, ShowWindow, SW_RESTORE, SW_SHOW,
+    BringWindowToTop, EnumWindows, GetForegroundWindow, GetWindowTextLengthW,
+    GetWindowThreadProcessId, IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow,
+    SW_RESTORE, SW_SHOW,
 };
 
 /// 窗口循环方向
@@ -58,9 +59,13 @@ unsafe extern "system" fn enum_windows_callback(hwnd: HWND, lparam: LPARAM) -> B
                     data.found_hwnd = Some(hwnd);
                     let _ = CloseHandle(process);
                     return BOOL(0); // 停止枚举
-                } else if data.hidden_hwnd.is_none() {
-                    // 不可见窗口（如最小化到托盘）— 作为备选，继续查找可见窗口
-                    data.hidden_hwnd = Some(hwnd);
+                } else {
+                    // 不可见窗口（如最小化到托盘）— 优先选有标题的窗口（主窗口）
+                    // Electron 等多进程应用有大量无标题辅助窗口，需要跳过
+                    let has_title = GetWindowTextLengthW(hwnd) > 0;
+                    if data.hidden_hwnd.is_none() || has_title {
+                        data.hidden_hwnd = Some(hwnd);
+                    }
                 }
             }
         }
@@ -230,6 +235,13 @@ fn launch_process(exe_path: &str) {
 pub fn launch_or_activate(shortcut: &Shortcut) {
     if let Some(hwnd) = find_window_by_exe(&shortcut.exe_name) {
         activate_window(hwnd);
+        // 如果激活后窗口仍不可见（某些托盘应用会阻止外部 ShowWindow 调用），
+        // 回退到启动 exe —— 单实例应用会自动唤起已有窗口
+        unsafe {
+            if !IsWindowVisible(hwnd).as_bool() {
+                launch_process(&shortcut.exe_path);
+            }
+        }
     } else {
         launch_process(&shortcut.exe_path);
     }

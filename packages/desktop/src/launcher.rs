@@ -11,8 +11,8 @@ use windows::Win32::System::Threading::{
     PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    EnumWindows, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
-    SetForegroundWindow, ShowWindow, SW_RESTORE,
+    BringWindowToTop, EnumWindows, GetForegroundWindow, GetWindowThreadProcessId, IsIconic,
+    IsWindowVisible, SetForegroundWindow, ShowWindow, SW_RESTORE, SW_SHOW,
 };
 
 /// 窗口循环方向
@@ -24,16 +24,12 @@ pub enum Direction {
 struct FindWindowData {
     exe_name: String,
     found_hwnd: Option<HWND>,
+    hidden_hwnd: Option<HWND>,
 }
 
-/// EnumWindows 回调：查找匹配 exe_name 的可见窗口
+/// EnumWindows 回调：查找匹配 exe_name 的窗口（优先可见窗口，备选不可见窗口）
 unsafe extern "system" fn enum_windows_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let data = &mut *(lparam.0 as *mut FindWindowData);
-
-    // 跳过不可见窗口
-    if !IsWindowVisible(hwnd).as_bool() {
-        return TRUE;
-    }
 
     let mut process_id: u32 = 0;
     GetWindowThreadProcessId(hwnd, Some(&mut process_id));
@@ -57,9 +53,15 @@ unsafe extern "system" fn enum_windows_callback(hwnd: HWND, lparam: LPARAM) -> B
             let path = OsString::from_wide(&buffer[..size as usize]);
             let path_str = path.to_string_lossy().to_lowercase();
             if path_str.ends_with(&data.exe_name.to_lowercase()) {
-                data.found_hwnd = Some(hwnd);
-                let _ = CloseHandle(process);
-                return BOOL(0); // 停止枚举
+                if IsWindowVisible(hwnd).as_bool() {
+                    // 可见窗口 — 优先选择，立即返回
+                    data.found_hwnd = Some(hwnd);
+                    let _ = CloseHandle(process);
+                    return BOOL(0); // 停止枚举
+                } else if data.hidden_hwnd.is_none() {
+                    // 不可见窗口（如最小化到托盘）— 作为备选，继续查找可见窗口
+                    data.hidden_hwnd = Some(hwnd);
+                }
             }
         }
         let _ = CloseHandle(process);
@@ -73,6 +75,7 @@ fn find_window_by_exe(exe_name: &str) -> Option<HWND> {
     let mut data = FindWindowData {
         exe_name: exe_name.to_string(),
         found_hwnd: None,
+        hidden_hwnd: None,
     };
 
     unsafe {
@@ -82,7 +85,8 @@ fn find_window_by_exe(exe_name: &str) -> Option<HWND> {
         );
     }
 
-    data.found_hwnd
+    // 优先返回可见窗口，其次返回不可见窗口（如最小化到托盘的窗口）
+    data.found_hwnd.or(data.hidden_hwnd)
 }
 
 struct CollectWindowsData {
@@ -160,9 +164,15 @@ pub fn cycle_window(direction: Direction) {
     }
 }
 
-/// 激活已有窗口
+/// 激活已有窗口（支持不可见窗口和最小化窗口）
 fn activate_window(hwnd: HWND) {
     unsafe {
+        // 处理不可见窗口（如最小化到托盘的窗口）
+        if !IsWindowVisible(hwnd).as_bool() {
+            let _ = ShowWindow(hwnd, SW_SHOW);
+        }
+
+        // 处理最小化窗口
         if IsIconic(hwnd).as_bool() {
             let _ = ShowWindow(hwnd, SW_RESTORE);
         }
@@ -181,6 +191,7 @@ fn activate_window(hwnd: HWND) {
         };
 
         let _ = SetForegroundWindow(hwnd);
+        let _ = BringWindowToTop(hwnd);
 
         if attached {
             let _ = AttachThreadInput(current_tid, foreground_tid, false);

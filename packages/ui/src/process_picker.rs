@@ -3,38 +3,19 @@ use dioxus::prelude::*;
 
 use crate::ProcessInfo;
 
-/// 将 32x32 RGBA 像素数据编码为 BMP 格式的 base64 data URI
-pub fn rgba_to_bmp_data_uri(rgba: &[u8]) -> String {
+/// 将 32x32 RGBA 像素数据编码为 PNG 格式的 base64 data URI（支持透明背景）
+pub fn rgba_to_png_data_uri(rgba: &[u8]) -> String {
     let size: u32 = 32;
-    let pixel_data_size = size * size * 4;
-    let file_size = 14 + 40 + pixel_data_size;
-
-    let mut bmp = Vec::with_capacity(file_size as usize);
-
-    // BITMAPFILEHEADER (14 bytes)
-    bmp.extend_from_slice(b"BM");
-    bmp.extend_from_slice(&file_size.to_le_bytes());
-    bmp.extend_from_slice(&[0u8; 4]); // reserved
-    bmp.extend_from_slice(&(14u32 + 40).to_le_bytes()); // pixel data offset
-
-    // BITMAPINFOHEADER (40 bytes)
-    bmp.extend_from_slice(&40u32.to_le_bytes()); // header size
-    bmp.extend_from_slice(&size.to_le_bytes()); // width
-    bmp.extend_from_slice(&(-(size as i32)).to_le_bytes()); // height (negative = top-down)
-    bmp.extend_from_slice(&1u16.to_le_bytes()); // planes
-    bmp.extend_from_slice(&32u16.to_le_bytes()); // bits per pixel
-    bmp.extend_from_slice(&[0u8; 24]); // compression + rest (all zeros for BI_RGB)
-
-    // Pixel data: convert RGBA → BGRA for BMP
-    for chunk in rgba.chunks_exact(4) {
-        bmp.push(chunk[2]); // B
-        bmp.push(chunk[1]); // G
-        bmp.push(chunk[0]); // R
-        bmp.push(chunk[3]); // A
+    let mut buf = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut buf, size, size);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().expect("PNG header");
+        writer.write_image_data(rgba).expect("PNG data");
     }
-
-    let b64 = base64::engine::general_purpose::STANDARD.encode(&bmp);
-    format!("data:image/bmp;base64,{b64}")
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
+    format!("data:image/png;base64,{b64}")
 }
 
 #[component]
@@ -146,7 +127,7 @@ pub fn ProcessPicker(
                                         // 图标
                                         if let Some(ref icon) = process.icon_rgba {
                                             img {
-                                                src: "{rgba_to_bmp_data_uri(icon)}",
+                                                src: "{rgba_to_png_data_uri(icon)}",
                                                 width: "24",
                                                 height: "24",
                                                 class: "shrink-0 rounded",

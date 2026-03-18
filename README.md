@@ -1,8 +1,16 @@
-# Win Aide
+<p align="center">
+  <img src="packages/desktop/assets/logo.png" width="128" height="128" alt="Win Aide Logo">
+</p>
 
-一款轻量级的 Windows 全局快捷键启动器，使用 Rust + [Dioxus](https://dioxuslabs.com/) 构建。
+<h1 align="center">Win Aide</h1>
 
-通过自定义全局热键快速启动或激活应用程序，支持同应用多窗口循环切换，让你的 Windows 桌面操作更加高效。
+<p align="center">一款轻量级的 Windows 全局快捷键启动器，使用 Rust + <a href="https://dioxuslabs.com/">Dioxus</a> 构建。</p>
+
+<p align="center">通过自定义全局热键快速启动或激活应用程序，支持同应用多窗口循环切换，让你的 Windows 桌面操作更加高效。</p>
+
+<p align="center">
+  <img src="packages/desktop/assets/preview.png" width="600" alt="Win Aide 运行效果">
+</p>
 
 ## 功能特性
 
@@ -17,6 +25,10 @@
 
 ## 安装
 
+### 下载安装包
+
+前往 [GitHub Releases](https://github.com/Mrjen/win_aide/releases) 页面下载最新版本的安装包（`.msi`），双击运行即可安装。
+
 ### 从源码构建
 
 **前置依赖：**
@@ -29,7 +41,7 @@
 cargo install dioxus-cli
 
 # 克隆仓库
-git clone https://github.com/your-username/win_aide.git
+git clone https://github.com/Mrjen/win_aide.git
 cd win_aide
 
 # 构建

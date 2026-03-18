@@ -739,7 +739,7 @@ dependencies = [
 
 [[package]]
 name = "desktop"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "dioxus",
  "dirs",
@@ -4983,7 +4983,7 @@ dependencies = [
 
 [[package]]
 name = "ui"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "base64",
  "dioxus",

@@ -13,9 +13,9 @@ use windows::Win32::System::Threading::{
     PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    BringWindowToTop, EnumWindows, GetForegroundWindow, GetWindowTextLengthW,
+    BringWindowToTop, EnumWindows, GetForegroundWindow, GetWindowLongW, GetWindowTextLengthW,
     GetWindowThreadProcessId, IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow,
-    SW_MINIMIZE, SW_RESTORE, SW_SHOW,
+    GWL_EXSTYLE, SW_MINIMIZE, SW_RESTORE, SW_SHOW, WS_EX_TOOLWINDOW,
 };
 
 /// 窗口循环方向
@@ -110,12 +110,18 @@ struct CollectWindowsData {
     windows: Vec<HWND>,
 }
 
-/// EnumWindows 回调：收集指定进程的所有有标题窗口（含隐藏窗口，以支持循环切换到托盘窗口）
+/// EnumWindows 回调：收集指定进程的所有主窗口（含隐藏窗口，以支持循环切换到托盘窗口）
 unsafe extern "system" fn collect_windows_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let data = &mut *(lparam.0 as *mut CollectWindowsData);
 
-    // 跳过无标题的辅助窗口，但保留隐藏窗口（如最小化到托盘的窗口）
+    // 跳过无标题的辅助窗口
     if GetWindowTextLengthW(hwnd) == 0 {
+        return TRUE;
+    }
+
+    // 跳过工具窗口（这些是辅助窗口，不应参与循环切换）
+    let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+    if ex_style & WS_EX_TOOLWINDOW.0 != 0 {
         return TRUE;
     }
 
@@ -261,16 +267,63 @@ fn find_launcher_path(exe_path: &str) -> Option<std::path::PathBuf> {
     }
 }
 
+/// 通过进程 ID 获取可执行文件名（小写），用于跨进程 exe 名称比较
+fn get_exe_name_by_pid(pid: u32) -> Option<String> {
+    unsafe {
+        let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+        let mut buffer = [0u16; 1024];
+        let mut size = buffer.len() as u32;
+        let result = QueryFullProcessImageNameW(
+            process,
+            PROCESS_NAME_FORMAT(0),
+            windows::core::PWSTR(buffer.as_mut_ptr()),
+            &mut size,
+        );
+        let _ = CloseHandle(process);
+        if result.is_ok() {
+            let path = OsString::from_wide(&buffer[..size as usize]);
+            Some(path.to_string_lossy().to_lowercase())
+        } else {
+            None
+        }
+    }
+}
+
 /// LaunchOrActivate：如果应用已运行则 toggle 窗口（前台→最小化，非前台→激活），否则启动
 pub fn launch_or_activate(shortcut: &Shortcut) {
     if let Some(hwnd) = find_window_by_exe(&shortcut.exe_name) {
-        // Toggle：如果目标窗口已在前台，最小化到任务栏
-        let is_foreground = unsafe { GetForegroundWindow() == hwnd };
-        if is_foreground {
-            unsafe {
-                let _ = ShowWindow(hwnd, SW_MINIMIZE);
+        // Toggle：如果前台窗口的 exe 名称与目标匹配，最小化该前台窗口
+        // 使用 exe 名称比较而非 PID/HWND 比较，因为多进程应用（如 Chrome、Electron）
+        // 同一个 exe 会有多个进程，find_window_by_exe 找到的窗口可能属于不同进程
+        unsafe {
+            let foreground = GetForegroundWindow();
+            let mut fg_pid: u32 = 0;
+            GetWindowThreadProcessId(foreground, Some(&mut fg_pid));
+
+            let is_same_app = if fg_pid != 0 {
+                get_exe_name_by_pid(fg_pid)
+                    .map(|name| name.ends_with(&shortcut.exe_name.to_lowercase()))
+                    .unwrap_or(false)
+            } else {
+                false
+            };
+
+            if is_same_app {
+                let foreground_tid = GetWindowThreadProcessId(foreground, None);
+                let current_tid = GetCurrentThreadId();
+                let attached = if foreground_tid != 0 && foreground_tid != current_tid {
+                    AttachThreadInput(current_tid, foreground_tid, true).as_bool()
+                } else {
+                    false
+                };
+
+                let _ = ShowWindow(foreground, SW_MINIMIZE);
+
+                if attached {
+                    let _ = AttachThreadInput(current_tid, foreground_tid, false);
+                }
+                return;
             }
-            return;
         }
 
         let was_hidden = unsafe { !IsWindowVisible(hwnd).as_bool() };

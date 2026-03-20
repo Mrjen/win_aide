@@ -15,7 +15,7 @@ use windows::Win32::System::Threading::{
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, EnumWindows, GetForegroundWindow, GetWindowTextLengthW,
     GetWindowThreadProcessId, IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow,
-    SW_RESTORE, SW_SHOW,
+    SW_MINIMIZE, SW_RESTORE, SW_SHOW,
 };
 
 /// 窗口循环方向
@@ -110,11 +110,12 @@ struct CollectWindowsData {
     windows: Vec<HWND>,
 }
 
-/// EnumWindows 回调：收集指定进程的所有可见窗口
+/// EnumWindows 回调：收集指定进程的所有有标题窗口（含隐藏窗口，以支持循环切换到托盘窗口）
 unsafe extern "system" fn collect_windows_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let data = &mut *(lparam.0 as *mut CollectWindowsData);
 
-    if !IsWindowVisible(hwnd).as_bool() {
+    // 跳过无标题的辅助窗口，但保留隐藏窗口（如最小化到托盘的窗口）
+    if GetWindowTextLengthW(hwnd) == 0 {
         return TRUE;
     }
 
@@ -260,9 +261,18 @@ fn find_launcher_path(exe_path: &str) -> Option<std::path::PathBuf> {
     }
 }
 
-/// LaunchOrActivate：如果应用已运行则激活窗口，否则启动
+/// LaunchOrActivate：如果应用已运行则 toggle 窗口（前台→最小化，非前台→激活），否则启动
 pub fn launch_or_activate(shortcut: &Shortcut) {
     if let Some(hwnd) = find_window_by_exe(&shortcut.exe_name) {
+        // Toggle：如果目标窗口已在前台，最小化到任务栏
+        let is_foreground = unsafe { GetForegroundWindow() == hwnd };
+        if is_foreground {
+            unsafe {
+                let _ = ShowWindow(hwnd, SW_MINIMIZE);
+            }
+            return;
+        }
+
         let was_hidden = unsafe { !IsWindowVisible(hwnd).as_bool() };
         let mut rect = windows::Win32::Foundation::RECT::default();
         unsafe { windows::Win32::UI::WindowsAndMessaging::GetWindowRect(hwnd, &mut rect).ok() };
